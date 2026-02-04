@@ -97,6 +97,13 @@ ul {
   font-size: 0.875rem;
 }
 
+.confirm-delete {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
 .error {
   color: #d32f2f;
 }

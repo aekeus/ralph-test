@@ -50,11 +50,32 @@ describe('TodoItem', () => {
     expect(onToggle).toHaveBeenCalledWith(baseTodo);
   });
 
-  it('calls onDelete when delete button is clicked', async () => {
+  it('shows confirmation when delete button is clicked', async () => {
     const onDelete = vi.fn();
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    expect(screen.getByText('Delete this todo and its subtasks?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel delete/i })).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it('calls onDelete when confirm delete is clicked', async () => {
+    const onDelete = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
     expect(onDelete).toHaveBeenCalledWith(1);
+  });
+
+  it('cancels delete when cancel button is clicked', async () => {
+    const onDelete = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /cancel delete/i }));
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.queryByText('Delete this todo and its subtasks?')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
   });
 
   it('toggles subtask list visibility when subtasks button is clicked', async () => {

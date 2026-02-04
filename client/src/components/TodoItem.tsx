@@ -10,6 +10,7 @@ interface TodoItemProps {
 
 export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
     <li className="todo-item">
@@ -26,9 +27,21 @@ export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           <button onClick={() => setExpanded(!expanded)} aria-label="Toggle subtasks">
             {expanded ? '▾' : '▸'} Subtasks
           </button>
-          <button onClick={() => onDelete(todo.id)} aria-label="Delete">
-            Delete
-          </button>
+          {confirmingDelete ? (
+            <span className="confirm-delete">
+              <span>Delete this todo and its subtasks?</span>
+              <button onClick={() => { onDelete(todo.id); setConfirmingDelete(false); }} aria-label="Confirm delete">
+                Yes
+              </button>
+              <button onClick={() => setConfirmingDelete(false)} aria-label="Cancel delete">
+                No
+              </button>
+            </span>
+          ) : (
+            <button onClick={() => setConfirmingDelete(true)} aria-label="Delete">
+              Delete
+            </button>
+          )}
         </div>
       </div>
       {expanded && <SubtaskList todoId={todo.id} />}

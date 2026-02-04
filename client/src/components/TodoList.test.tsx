@@ -103,7 +103,7 @@ describe('TodoList', () => {
     });
   });
 
-  it('deletes a todo', async () => {
+  it('deletes a todo after confirmation', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.deleteTodo).mockResolvedValue();
 
@@ -112,8 +112,14 @@ describe('TodoList', () => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
     await userEvent.click(deleteButtons[0]);
+
+    // Confirmation prompt should appear
+    expect(screen.getByText('Delete this todo and its subtasks?')).toBeInTheDocument();
+
+    // Confirm the deletion
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
 
     await waitFor(() => {
       expect(screen.queryByText('First todo')).not.toBeInTheDocument();
