@@ -89,6 +89,37 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/todos/stats (must be before /:id routes)
+router.get('/stats', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE completed = true)::int AS completed,
+        COUNT(*) FILTER (WHERE completed = false)::int AS active,
+        COUNT(*) FILTER (WHERE due_date < CURRENT_DATE AND completed = false)::int AS overdue,
+        COUNT(*) FILTER (WHERE priority = 'high')::int AS high,
+        COUNT(*) FILTER (WHERE priority = 'medium')::int AS medium,
+        COUNT(*) FILTER (WHERE priority = 'low')::int AS low
+      FROM todos`
+    );
+    const row = result.rows[0];
+    res.json({
+      total: row.total,
+      completed: row.completed,
+      active: row.active,
+      overdue: row.overdue,
+      byPriority: {
+        high: row.high,
+        medium: row.medium,
+        low: row.low,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
 // PUT /api/todos/reorder (must be before /:id routes)
 router.put('/reorder', async (req: Request, res: Response) => {
   try {
