@@ -4,8 +4,20 @@
   padding: var(--space-xl);
 }
 
+.todo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
 .todo-list h1 {
-  margin-bottom: var(--space-md);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.025em;
+  color: var(--color-text);
 }
 
 .add-todo {
@@ -122,7 +134,54 @@
 .export-buttons {
   display: flex;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary-600);
+  background-color: transparent;
+  border: 1.5px solid var(--color-primary-300);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.btn-export:hover {
+  background-color: var(--color-primary-50);
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-700);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-export:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.btn-export-icon {
+  font-size: var(--font-size-xs);
+  line-height: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-export {
+    color: var(--color-primary-300);
+    border-color: var(--color-primary-400);
+  }
+
+  .btn-export:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+    border-color: var(--color-primary-300);
+    color: var(--color-primary-200);
+  }
 }
 
 .error {

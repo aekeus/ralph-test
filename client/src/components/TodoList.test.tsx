@@ -191,4 +191,42 @@ describe('TodoList', () => {
     // Export buttons should not be visible during loading
     expect(screen.queryByRole('button', { name: /export json/i })).not.toBeInTheDocument();
   });
+
+  it('renders header with heading and export buttons in a header element', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const header = screen.getByRole('banner');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveClass('todo-header');
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('Todos');
+    expect(header.contains(heading)).toBe(true);
+  });
+
+  it('renders export buttons with pill styling class and icons', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const exportJsonBtn = screen.getByRole('button', { name: /export json/i });
+    const exportCsvBtn = screen.getByRole('button', { name: /export csv/i });
+
+    expect(exportJsonBtn).toHaveClass('btn-export');
+    expect(exportCsvBtn).toHaveClass('btn-export');
+
+    // Each button should contain an icon span
+    const jsonIcon = exportJsonBtn.querySelector('.btn-export-icon');
+    const csvIcon = exportCsvBtn.querySelector('.btn-export-icon');
+    expect(jsonIcon).toBeInTheDocument();
+    expect(csvIcon).toBeInTheDocument();
+    expect(jsonIcon).toHaveAttribute('aria-hidden', 'true');
+    expect(csvIcon).toHaveAttribute('aria-hidden', 'true');
+  });
 });

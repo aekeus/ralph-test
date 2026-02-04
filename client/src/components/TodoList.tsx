@@ -60,15 +60,23 @@ export default function TodoList() {
 
   return (
     <div className="todo-list">
-      <h1>Todos</h1>
-      <div className="export-buttons">
-        <a href={exportJsonUrl()} download>
-          <button type="button">Export JSON</button>
-        </a>
-        <a href={exportCsvUrl()} download>
-          <button type="button">Export CSV</button>
-        </a>
-      </div>
+      <header className="todo-header">
+        <h1>Todos</h1>
+        <div className="export-buttons">
+          <a href={exportJsonUrl()} download>
+            <button type="button" className="btn-export">
+              <span className="btn-export-icon" aria-hidden="true">{'{ }'}</span>
+              Export JSON
+            </button>
+          </a>
+          <a href={exportCsvUrl()} download>
+            <button type="button" className="btn-export">
+              <span className="btn-export-icon" aria-hidden="true">&#9776;</span>
+              Export CSV
+            </button>
+          </a>
+        </div>
+      </header>
       {error && <p className="error">{error}</p>}
       <AddTodo onAdd={handleAdd} />
       {todos.length === 0 ? (
