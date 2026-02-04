@@ -42,6 +42,10 @@ export async function deleteTodo(id: number): Promise<void> {
   await api.delete(`/${id}`);
 }
 
+export async function reorderTodos(orders: { id: number; position: number }[]): Promise<void> {
+  await api.put('/reorder', { orders });
+}
+
 export async function fetchSubtasks(todoId: number): Promise<Subtask[]> {
   const { data } = await api.get<Subtask[]>(`/${todoId}/subtasks`);
   return data;

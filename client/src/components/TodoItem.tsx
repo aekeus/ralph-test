@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import type { Todo } from '../types';
 import SubtaskList from './SubtaskList';
 
@@ -10,6 +11,7 @@ interface TodoItemProps {
   onTitleChange?: (id: number, title: string) => void;
   isNew?: boolean;
   onAnimationEnd?: () => void;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
 function toDateOnly(dateStr: string): string {
@@ -44,7 +46,7 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 };
 
-export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, isNew, onAnimationEnd }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -92,6 +94,16 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
     <>
       <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}${isNew ? ' todo-item--enter' : ''}`} onAnimationEnd={onAnimationEnd}>
         <div className="todo-item-header">
+          <span className="drag-handle" {...dragHandleProps} aria-label="Drag to reorder">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="3" r="1.5" />
+              <circle cx="11" cy="3" r="1.5" />
+              <circle cx="5" cy="8" r="1.5" />
+              <circle cx="11" cy="8" r="1.5" />
+              <circle cx="5" cy="13" r="1.5" />
+              <circle cx="11" cy="13" r="1.5" />
+            </svg>
+          </span>
           <label className="todo-item-label">
             <input
               type="checkbox"

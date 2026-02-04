@@ -17,6 +17,7 @@ const baseTodo: Todo = {
   completed: false,
   due_date: null,
   priority: 'medium',
+  position: 0,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
@@ -29,6 +30,13 @@ describe('TodoItem', () => {
   it('renders the todo title', () => {
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
     expect(screen.getByText('Test todo')).toBeInTheDocument();
+  });
+
+  it('renders a drag handle', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const handle = document.querySelector('.drag-handle');
+    expect(handle).toBeInTheDocument();
+    expect(handle).toHaveAttribute('aria-label', 'Drag to reorder');
   });
 
   it('renders an unchecked checkbox for incomplete todo', () => {
@@ -502,6 +510,16 @@ describe('Priority indicator CSS styles', () => {
 
   it('styles low priority dot with green color', () => {
     expect(appCss).toMatch(/\.priority-dot--low\s*\{[^}]*background-color:\s*#22c55e/);
+  });
+});
+
+describe('Drag handle CSS styles', () => {
+  it('styles drag-handle with grab cursor', () => {
+    expect(appCss).toMatch(/\.drag-handle\s*\{[^}]*cursor:\s*grab/);
+  });
+
+  it('styles drag-handle with flex display', () => {
+    expect(appCss).toMatch(/\.drag-handle\s*\{[^}]*display:\s*flex/);
   });
 });
 

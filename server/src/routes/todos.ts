@@ -34,7 +34,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    let orderClause = 'ORDER BY created_at DESC';
+    let orderClause = 'ORDER BY position ASC NULLS LAST, created_at DESC';
     if (req.query.sort === 'due_date') {
       orderClause = 'ORDER BY due_date ASC NULLS LAST';
     } else if (req.query.sort === 'priority') {
@@ -45,6 +45,43 @@ router.get('/', async (req: Request, res: Response) => {
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch todos' });
+  }
+});
+
+// PUT /api/todos/reorder (must be before /:id routes)
+router.put('/reorder', async (req: Request, res: Response) => {
+  try {
+    const { orders } = req.body;
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({ error: 'orders must be a non-empty array of {id, position}' });
+    }
+
+    for (const item of orders) {
+      if (typeof item.id !== 'number' || typeof item.position !== 'number') {
+        return res.status(400).json({ error: 'Each item must have numeric id and position' });
+      }
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const item of orders) {
+        await client.query(
+          'UPDATE todos SET position = $1, updated_at = NOW() WHERE id = $2',
+          [item.position, item.id]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to reorder todos' });
   }
 });
 

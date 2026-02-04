@@ -2,15 +2,32 @@ import request from 'supertest';
 import app from '../app';
 import pool from '../db';
 
+const mockClientQueryFn = jest.fn();
+const mockClientReleaseFn = jest.fn();
+
 jest.mock('../db', () => ({
   __esModule: true,
-  default: { query: jest.fn() },
+  default: {
+    query: jest.fn(),
+    connect: jest.fn(),
+  },
 }));
 
 const mockQuery = pool.query as jest.Mock;
+const mockConnect = (pool as any).connect as jest.Mock;
+
+beforeEach(() => {
+  mockConnect.mockResolvedValue({
+    query: mockClientQueryFn,
+    release: mockClientReleaseFn,
+  });
+});
 
 afterEach(() => {
   mockQuery.mockReset();
+  mockConnect.mockReset();
+  mockClientQueryFn.mockReset();
+  mockClientReleaseFn.mockReset();
 });
 
 describe('GET /api/todos', () => {
@@ -25,7 +42,7 @@ describe('GET /api/todos', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(todos);
-    expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM todos  ORDER BY created_at DESC', []);
+    expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM todos  ORDER BY position ASC NULLS LAST, created_at DESC', []);
   });
 
   it('returns 500 on database error', async () => {
@@ -45,7 +62,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?search=grocery');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE title ILIKE $1 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE title ILIKE $1 ORDER BY position ASC NULLS LAST, created_at DESC',
       ['%grocery%']
     );
   });
@@ -56,7 +73,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?status=active');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE completed = $1 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE completed = $1 ORDER BY position ASC NULLS LAST, created_at DESC',
       [false]
     );
   });
@@ -67,7 +84,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?status=completed');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE completed = $1 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE completed = $1 ORDER BY position ASC NULLS LAST, created_at DESC',
       [true]
     );
   });
@@ -78,7 +95,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?priority=high');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE priority = $1 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE priority = $1 ORDER BY position ASC NULLS LAST, created_at DESC',
       ['high']
     );
   });
@@ -89,7 +106,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?priority=urgent');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos  ORDER BY created_at DESC',
+      'SELECT * FROM todos  ORDER BY position ASC NULLS LAST, created_at DESC',
       []
     );
   });
@@ -100,7 +117,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?search=buy&status=active');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 ORDER BY position ASC NULLS LAST, created_at DESC',
       ['%buy%', false]
     );
   });
@@ -111,7 +128,7 @@ describe('GET /api/todos - search and filters', () => {
     await request(app).get('/api/todos?search=task&status=active&priority=high');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 AND priority = $3 ORDER BY created_at DESC',
+      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 AND priority = $3 ORDER BY position ASC NULLS LAST, created_at DESC',
       ['%task%', false, 'high']
     );
   });
@@ -328,5 +345,81 @@ describe('DELETE /api/todos/:id', () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Failed to delete todo' });
+  });
+});
+
+describe('PUT /api/todos/reorder', () => {
+  it('updates positions for all provided todos in a transaction', async () => {
+    const orders = [
+      { id: 1, position: 0 },
+      { id: 2, position: 1 },
+      { id: 3, position: 2 },
+    ];
+
+    const res = await request(app)
+      .put('/api/todos/reorder')
+      .send({ orders });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true });
+    expect(mockClientQueryFn).toHaveBeenCalledWith('BEGIN');
+    expect(mockClientQueryFn).toHaveBeenCalledWith(
+      'UPDATE todos SET position = $1, updated_at = NOW() WHERE id = $2',
+      [0, 1]
+    );
+    expect(mockClientQueryFn).toHaveBeenCalledWith(
+      'UPDATE todos SET position = $1, updated_at = NOW() WHERE id = $2',
+      [1, 2]
+    );
+    expect(mockClientQueryFn).toHaveBeenCalledWith(
+      'UPDATE todos SET position = $1, updated_at = NOW() WHERE id = $2',
+      [2, 3]
+    );
+    expect(mockClientQueryFn).toHaveBeenCalledWith('COMMIT');
+    expect(mockClientReleaseFn).toHaveBeenCalled();
+  });
+
+  it('returns 400 when orders is not an array', async () => {
+    const res = await request(app)
+      .put('/api/todos/reorder')
+      .send({ orders: 'invalid' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'orders must be a non-empty array of {id, position}' });
+  });
+
+  it('returns 400 when orders is empty', async () => {
+    const res = await request(app)
+      .put('/api/todos/reorder')
+      .send({ orders: [] });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'orders must be a non-empty array of {id, position}' });
+  });
+
+  it('returns 400 when items have invalid types', async () => {
+    const res = await request(app)
+      .put('/api/todos/reorder')
+      .send({ orders: [{ id: 'abc', position: 0 }] });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Each item must have numeric id and position' });
+  });
+
+  it('rolls back transaction on database error', async () => {
+    mockClientQueryFn.mockImplementation((sql: string) => {
+      if (sql === 'BEGIN') return Promise.resolve();
+      if (sql.startsWith('UPDATE')) return Promise.reject(new Error('DB error'));
+      return Promise.resolve();
+    });
+
+    const res = await request(app)
+      .put('/api/todos/reorder')
+      .send({ orders: [{ id: 1, position: 0 }] });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to reorder todos' });
+    expect(mockClientQueryFn).toHaveBeenCalledWith('ROLLBACK');
+    expect(mockClientReleaseFn).toHaveBeenCalled();
   });
 });

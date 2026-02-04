@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import type { Todo } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, exportJsonUrl, exportCsvUrl } from '../api';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, reorderTodos, exportJsonUrl, exportCsvUrl } from '../api';
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
@@ -104,6 +106,33 @@ export default function TodoList() {
     }
   }
 
+  async function handleDragEnd(result: DropResult) {
+    if (!result.destination || result.source.index === result.destination.index) {
+      return;
+    }
+
+    const reordered = Array.from(todos);
+    const [moved] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+
+    // Optimistic update
+    setTodos(reordered);
+
+    const orders = reordered.map((todo, index) => ({
+      id: todo.id,
+      position: index,
+    }));
+
+    try {
+      setError(null);
+      await reorderTodos(orders);
+    } catch {
+      setError('Failed to reorder todos');
+      // Revert on failure
+      await loadTodos(buildParams());
+    }
+  }
+
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchQuery(e.target.value);
   }
@@ -180,20 +209,38 @@ export default function TodoList() {
       {todos.length === 0 ? (
         <p>{hasActiveFilters ? 'No todos match your filters.' : 'No todos yet. Add one above!'}</p>
       ) : (
-        <ul>
-          {todos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggle={handleToggle}
-              onDelete={handleDelete}
-              onPriorityChange={handlePriorityChange}
-              onTitleChange={handleTitleChange}
-              isNew={newTodoIds.current.has(todo.id)}
-              onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
-            />
-          ))}
-        </ul>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="todo-list">
+            {(provided) => (
+              <ul ref={provided.innerRef} {...provided.droppableProps}>
+                {todos.map((todo, index) => (
+                  <Draggable key={todo.id} draggableId={String(todo.id)} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        style={provided.draggableProps.style}
+                        className={snapshot.isDragging ? 'todo-dragging' : ''}
+                      >
+                        <TodoItem
+                          todo={todo}
+                          onToggle={handleToggle}
+                          onDelete={handleDelete}
+                          onPriorityChange={handlePriorityChange}
+                          onTitleChange={handleTitleChange}
+                          isNew={newTodoIds.current.has(todo.id)}
+                          onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
+                          dragHandleProps={provided.dragHandleProps}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
     </div>
   );

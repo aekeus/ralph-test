@@ -438,6 +438,41 @@
   }
 }
 
+/* ===== Drag Handle ===== */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: grab;
+  color: var(--color-gray-400);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.drag-handle:hover {
+  color: var(--color-gray-600);
+  background-color: var(--color-gray-100);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.todo-dragging .todo-item {
+  box-shadow: var(--shadow-md);
+  transform: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .drag-handle:hover {
+    color: var(--color-gray-300);
+    background-color: var(--color-gray-700);
+  }
+}
+
 /* ===== Todo Item Card ===== */
 .todo-item {
   display: flex;

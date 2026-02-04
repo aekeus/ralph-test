@@ -33,7 +33,7 @@ describe('Database schema', () => {
     });
 
     it('has the correct number of columns', () => {
-      expect(columns).toHaveLength(5);
+      expect(columns).toHaveLength(8);
     });
 
     it('has id column as SERIAL PRIMARY KEY', async () => {
