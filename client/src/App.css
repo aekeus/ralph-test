@@ -1605,3 +1605,278 @@
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
+
+/* ===== Bulk Selection Checkbox ===== */
+.bulk-select-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bulk-select-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.bulk-select-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-gray-300);
+  background-color: transparent;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.bulk-select-custom svg {
+  width: 10px;
+  height: 10px;
+  color: var(--color-white);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.bulk-select-checkbox:checked + .bulk-select-custom {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.bulk-select-checkbox:checked + .bulk-select-custom svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bulk-select-checkbox:focus-visible + .bulk-select-custom {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.bulk-select-label:hover .bulk-select-custom {
+  border-color: var(--color-primary-400);
+}
+
+.todo-item--selected {
+  border-color: var(--color-primary-300);
+  background-color: var(--color-primary-50);
+}
+
+[data-theme="dark"] .todo-item--selected {
+  border-color: var(--color-primary-500);
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* ===== Select All Checkbox ===== */
+.todo-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.select-all-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.select-all-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.select-all-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-gray-300);
+  background-color: transparent;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.select-all-custom svg {
+  width: 11px;
+  height: 11px;
+  color: var(--color-white);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.select-all-checkbox:checked + .select-all-custom {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.select-all-checkbox:checked + .select-all-custom svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.select-all-checkbox:focus-visible + .select-all-custom {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.select-all-label:hover .select-all-custom {
+  border-color: var(--color-primary-400);
+}
+
+/* ===== Bulk Action Bar ===== */
+.bulk-action-bar {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-gray-800);
+  color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 1500;
+  animation: toast-slide-in 300ms ease-out forwards;
+  white-space: nowrap;
+}
+
+.bulk-action-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  padding-right: var(--space-sm);
+  border-right: 1px solid var(--color-gray-600);
+}
+
+.bulk-action-btn {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.bulk-action-btn--delete {
+  background-color: var(--color-danger-500);
+  color: var(--color-white);
+}
+
+.bulk-action-btn--delete:hover {
+  background-color: var(--color-danger-600);
+}
+
+.bulk-action-btn--priority {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--color-white);
+}
+
+.bulk-action-btn--priority:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.bulk-action-btn--clear {
+  background-color: transparent;
+  color: var(--color-gray-300);
+}
+
+.bulk-action-btn--clear:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+}
+
+.bulk-action-priority-wrapper {
+  position: relative;
+}
+
+.bulk-priority-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: var(--space-xs);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  z-index: 1600;
+  min-width: 120px;
+}
+
+.bulk-priority-option {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast);
+}
+
+.bulk-priority-option:hover {
+  background-color: var(--color-gray-100);
+}
+
+.bulk-priority-option--high:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.bulk-priority-option--medium:hover {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.bulk-priority-option--low:hover {
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
+[data-theme="dark"] .bulk-action-bar {
+  background-color: var(--color-gray-700);
+}
+
+[data-theme="dark"] .bulk-priority-option:hover {
+  background-color: var(--color-gray-700);
+}
+
+[data-theme="dark"] .bulk-priority-option--high:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .bulk-priority-option--medium:hover {
+  background-color: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .bulk-priority-option--low:hover {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}

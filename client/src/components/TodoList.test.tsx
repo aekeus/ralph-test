@@ -142,7 +142,7 @@ describe('TodoList', () => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
 
-    const checkboxes = screen.getAllByRole('checkbox');
+    const checkboxes = document.querySelectorAll('.todo-checkbox');
     await userEvent.click(checkboxes[0]);
 
     await waitFor(() => {
@@ -974,6 +974,207 @@ describe('TodoList', () => {
     await userEvent.click(workChip);
 
     expect(workChip).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  // ===== Bulk Actions Tests =====
+
+  it('renders bulk selection checkboxes on each todo item', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    expect(selectCheckboxes).toHaveLength(2);
+  });
+
+  it('renders Select All checkbox in header when todos exist', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectAll = screen.getByRole('checkbox', { name: /select all/i });
+    expect(selectAll).toBeInTheDocument();
+    expect(selectAll).not.toBeChecked();
+  });
+
+  it('does not show bulk action bar when no todos are selected', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+  });
+
+  it('shows bulk action bar when a todo is selected', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+
+    expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(screen.getByText('Delete Selected (1)')).toBeInTheDocument();
+    expect(screen.getByText('Set Priority')).toBeInTheDocument();
+    expect(screen.getByText('Clear Selection')).toBeInTheDocument();
+  });
+
+  it('shows correct count when multiple todos are selected', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+    await userEvent.click(selectCheckboxes[1]);
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    expect(screen.getByText('Delete Selected (2)')).toBeInTheDocument();
+  });
+
+  it('selects all todos when Select All is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectAll = screen.getByRole('checkbox', { name: /select all/i });
+    await userEvent.click(selectAll);
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    expect(selectCheckboxes[0]).toBeChecked();
+    expect(selectCheckboxes[1]).toBeChecked();
+  });
+
+  it('deselects all when Select All is clicked while all selected', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectAll = screen.getByRole('checkbox', { name: /select all/i });
+    await userEvent.click(selectAll);
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+
+    await userEvent.click(selectAll);
+    expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+  });
+
+  it('clears selection when Clear Selection is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+    await userEvent.click(selectCheckboxes[1]);
+
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Clear Selection'));
+
+    expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+  });
+
+  it('deletes selected todos with undo toasts when Delete Selected is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.deleteTodo).mockResolvedValue();
+
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+    await userEvent.click(selectCheckboxes[1]);
+
+    await userEvent.click(screen.getByText('Delete Selected (2)'));
+
+    // Both todos should be removed
+    await waitFor(() => {
+      expect(screen.queryByText('First todo')).not.toBeInTheDocument();
+      expect(screen.queryByText('Second todo')).not.toBeInTheDocument();
+    });
+
+    // Toasts should appear for each deleted todo
+    const toasts = screen.getAllByText('Todo deleted');
+    expect(toasts).toHaveLength(2);
+
+    // Action bar should be gone after delete
+    expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+  });
+
+  it('shows priority dropdown when Set Priority is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+
+    await userEvent.click(screen.getByText('Set Priority'));
+
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'High' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Medium' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Low' })).toBeInTheDocument();
+  });
+
+  it('calls updateTodoPriority for each selected todo when priority is set', async () => {
+    const updatedTodo1 = { ...mockTodos[0], priority: 'high' as const };
+    const updatedTodo2 = { ...mockTodos[1], priority: 'high' as const };
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.updateTodoPriority)
+      .mockResolvedValueOnce(updatedTodo1)
+      .mockResolvedValueOnce(updatedTodo2);
+
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const selectCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+    await userEvent.click(selectCheckboxes[0]);
+    await userEvent.click(selectCheckboxes[1]);
+
+    await userEvent.click(screen.getByText('Set Priority'));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'High' }));
+
+    await waitFor(() => {
+      expect(api.updateTodoPriority).toHaveBeenCalledWith(1, 'high');
+      expect(api.updateTodoPriority).toHaveBeenCalledWith(2, 'high');
+    });
   });
 
   it('opens shortcuts modal when keyboard button is clicked', async () => {

@@ -50,14 +50,15 @@ describe('TodoItem', () => {
 
   it('renders an unchecked checkbox for incomplete todo', () => {
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
-    const checkbox = screen.getByRole('checkbox');
+    const checkbox = document.querySelector('.todo-checkbox') as HTMLInputElement;
     expect(checkbox).not.toBeChecked();
   });
 
   it('renders a checked checkbox for completed todo', () => {
     const completed = { ...baseTodo, completed: true };
     render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
-    expect(screen.getByRole('checkbox')).toBeChecked();
+    const checkbox = document.querySelector('.todo-checkbox') as HTMLInputElement;
+    expect(checkbox).toBeChecked();
   });
 
   it('applies completed class when todo is completed', () => {
@@ -69,7 +70,8 @@ describe('TodoItem', () => {
   it('calls onToggle when checkbox is clicked', async () => {
     const onToggle = vi.fn();
     render(<TodoItem todo={baseTodo} onToggle={onToggle} onDelete={vi.fn()} {...defaultTagProps} />);
-    await userEvent.click(screen.getByRole('checkbox'));
+    const checkbox = document.querySelector('.todo-checkbox') as HTMLInputElement;
+    await userEvent.click(checkbox);
     expect(onToggle).toHaveBeenCalledWith(baseTodo);
   });
 
@@ -188,7 +190,8 @@ describe('TodoItem', () => {
 
   it('renders the checkbox with todo-checkbox class', () => {
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
-    const checkbox = screen.getByRole('checkbox');
+    const checkbox = document.querySelector('.todo-checkbox');
+    expect(checkbox).toBeInTheDocument();
     expect(checkbox).toHaveClass('todo-checkbox');
   });
 
@@ -791,6 +794,49 @@ describe('TodoItem notes', () => {
     const btns = screen.getAllByRole('button', { name: /toggle notes/i });
     await userEvent.click(btns[btns.length - 1]);
     expect(screen.getByLabelText('Todo notes')).toHaveValue('My existing notes');
+  });
+});
+
+describe('TodoItem bulk selection checkbox', () => {
+  it('renders a bulk selection checkbox', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    const checkbox = screen.getByRole('checkbox', { name: /select test todo/i });
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('renders checked bulk selection checkbox when isSelected is true', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isSelected={true} onSelectToggle={vi.fn()} />);
+    const checkbox = screen.getByRole('checkbox', { name: /select test todo/i });
+    expect(checkbox).toBeChecked();
+  });
+
+  it('calls onSelectToggle when bulk checkbox is clicked', async () => {
+    const onSelectToggle = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onSelectToggle={onSelectToggle} />);
+    await userEvent.click(screen.getByRole('checkbox', { name: /select test todo/i }));
+    expect(onSelectToggle).toHaveBeenCalledWith(1);
+  });
+
+  it('applies todo-item--selected class when isSelected is true', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isSelected={true} onSelectToggle={vi.fn()} />);
+    const li = screen.getByRole('listitem');
+    expect(li).toHaveClass('todo-item--selected');
+  });
+
+  it('does not apply todo-item--selected class when isSelected is false', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isSelected={false} />);
+    const li = screen.getByRole('listitem');
+    expect(li).not.toHaveClass('todo-item--selected');
+  });
+
+  it('bulk checkbox appears before drag handle', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    const header = document.querySelector('.todo-item-header')!;
+    const bulkLabel = header.querySelector('.bulk-select-label')!;
+    const dragHandle = header.querySelector('.drag-handle')!;
+    const children = Array.from(header.children);
+    expect(children.indexOf(bulkLabel)).toBeLessThan(children.indexOf(dragHandle));
   });
 });
 

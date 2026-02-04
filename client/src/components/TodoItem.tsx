@@ -18,6 +18,8 @@ interface TodoItemProps {
   isNew?: boolean;
   onAnimationEnd?: () => void;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
+  isSelected?: boolean;
+  onSelectToggle?: (id: number) => void;
 }
 
 function toDateOnly(dateStr: string): string {
@@ -56,7 +58,7 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 };
 
-export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, onNotesChange, allTags, onAddTag, onCreateAndAddTag, onRemoveTag, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, onNotesChange, allTags, onAddTag, onCreateAndAddTag, onRemoveTag, isNew, onAnimationEnd, dragHandleProps, isSelected, onSelectToggle }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [editNotes, setEditNotes] = useState(todo.notes || '');
@@ -132,8 +134,22 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
 
   return (
     <>
-      <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}${isNew ? ' todo-item--enter' : ''}`} onAnimationEnd={onAnimationEnd}>
+      <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}${isNew ? ' todo-item--enter' : ''}${isSelected ? ' todo-item--selected' : ''}`} onAnimationEnd={onAnimationEnd}>
         <div className="todo-item-header">
+          <label className="bulk-select-label">
+            <input
+              type="checkbox"
+              className="bulk-select-checkbox"
+              checked={!!isSelected}
+              onChange={() => onSelectToggle?.(todo.id)}
+              aria-label={`Select ${todo.title}`}
+            />
+            <span className="bulk-select-custom" aria-hidden="true">
+              <svg viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </label>
           <span className="drag-handle" {...dragHandleProps} aria-label="Drag to reorder">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <circle cx="5" cy="3" r="1.5" />

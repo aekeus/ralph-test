@@ -29,6 +29,8 @@ export default function TodoList() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const addTodoInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [selectedTodoIds, setSelectedTodoIds] = useState<Set<number>>(new Set());
+  const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
 
   const loadTodos = useCallback(async (params?: FetchTodosParams) => {
     try {
@@ -256,6 +258,46 @@ export default function TodoList() {
     }
   }
 
+  function handleSelectToggle(id: number) {
+    setSelectedTodoIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function handleSelectAll() {
+    if (selectedTodoIds.size === todos.length) {
+      setSelectedTodoIds(new Set());
+    } else {
+      setSelectedTodoIds(new Set(todos.map((t) => t.id)));
+    }
+  }
+
+  function handleClearSelection() {
+    setSelectedTodoIds(new Set());
+  }
+
+  function handleBulkDelete() {
+    const idsToDelete = Array.from(selectedTodoIds);
+    for (const id of idsToDelete) {
+      handleDelete(id);
+    }
+    setSelectedTodoIds(new Set());
+  }
+
+  async function handleBulkPriorityChange(priority: 'low' | 'medium' | 'high') {
+    setPriorityDropdownOpen(false);
+    const idsToUpdate = Array.from(selectedTodoIds);
+    for (const id of idsToUpdate) {
+      await handlePriorityChange(id, priority);
+    }
+  }
+
   function toggleTagFilter(tagName: string) {
     setSelectedTags((prev) =>
       prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
@@ -273,7 +315,25 @@ export default function TodoList() {
   return (
     <div className="todo-list">
       <header className="todo-header">
-        <h1>Todos</h1>
+        <div className="todo-header-left">
+          {todos.length > 0 && (
+            <label className="select-all-label">
+              <input
+                type="checkbox"
+                className="select-all-checkbox"
+                checked={todos.length > 0 && selectedTodoIds.size === todos.length}
+                onChange={handleSelectAll}
+                aria-label="Select all"
+              />
+              <span className="select-all-custom" aria-hidden="true">
+                <svg viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+          )}
+          <h1>Todos</h1>
+        </div>
         <div className="export-buttons">
           <a href={exportJsonUrl()} download>
             <button type="button" className="btn-export">
@@ -432,6 +492,8 @@ export default function TodoList() {
                           isNew={newTodoIds.current.has(todo.id)}
                           onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
                           dragHandleProps={provided.dragHandleProps}
+                          isSelected={selectedTodoIds.has(todo.id)}
+                          onSelectToggle={handleSelectToggle}
                         />
                       </div>
                     )}
@@ -442,6 +504,43 @@ export default function TodoList() {
             )}
           </Droppable>
         </DragDropContext>
+      )}
+      {selectedTodoIds.size > 0 && (
+        <div className="bulk-action-bar" role="toolbar" aria-label="Bulk actions">
+          <span className="bulk-action-count">{selectedTodoIds.size} selected</span>
+          <button
+            type="button"
+            className="bulk-action-btn bulk-action-btn--delete"
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedTodoIds.size})
+          </button>
+          <div className="bulk-action-priority-wrapper">
+            <button
+              type="button"
+              className="bulk-action-btn bulk-action-btn--priority"
+              onClick={() => setPriorityDropdownOpen(!priorityDropdownOpen)}
+              aria-haspopup="true"
+              aria-expanded={priorityDropdownOpen}
+            >
+              Set Priority
+            </button>
+            {priorityDropdownOpen && (
+              <div className="bulk-priority-dropdown" role="menu">
+                <button type="button" role="menuitem" className="bulk-priority-option bulk-priority-option--high" onClick={() => handleBulkPriorityChange('high')}>High</button>
+                <button type="button" role="menuitem" className="bulk-priority-option bulk-priority-option--medium" onClick={() => handleBulkPriorityChange('medium')}>Medium</button>
+                <button type="button" role="menuitem" className="bulk-priority-option bulk-priority-option--low" onClick={() => handleBulkPriorityChange('low')}>Low</button>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className="bulk-action-btn bulk-action-btn--clear"
+            onClick={handleClearSelection}
+          >
+            Clear Selection
+          </button>
+        </div>
       )}
       {toasts.length > 0 && (
         <div className="toast-container" aria-live="polite">
