@@ -1,0 +1,19 @@
+# Todo App v4 — Due Dates, Priority & Search/Filter
+
+Building on the existing Express + React + PostgreSQL todo app (which has todos, subtasks, export, and polished UI).
+
+## Tasks
+
+- [x] Add due date support to the database and API: add a `due_date DATE` column to the `todos` table via ALTER TABLE. Update the POST and PUT `/api/todos` routes to accept and persist `due_date`. Update GET `/api/todos` to return `due_date` and support a `?sort=due_date` query parameter that orders todos by due date (nulls last). Update the TypeScript `Todo` type in both server and client. **Verify:** Write a test in `test/` that creates a todo with a due_date, fetches it back and confirms the date is correct, and tests the sort query param ordering.
+
+- [x] Add due date UI: add a date picker input to the AddTodo component so users can optionally set a due date when creating a todo. Display the due date on each TodoItem as a styled badge (e.g., "Due: Feb 10"). Todos that are past their due date and not completed should show the due date badge in red with an "Overdue" label. Todos due today should show in amber/orange. Future dates in a neutral color. **Verify:** Use the browser to add a todo with a due date set to yesterday and confirm it shows as overdue in red. Add one due today and confirm it shows in amber.
+
+- [x] Add priority levels to the database and API: add a `priority VARCHAR(10) DEFAULT 'medium'` column to the `todos` table (values: 'low', 'medium', 'high'). Update POST and PUT `/api/todos` routes to accept `priority`. Update GET `/api/todos` to support `?sort=priority` (high first, then medium, then low). Update the TypeScript `Todo` type. **Verify:** Write a test in `test/` that creates todos with different priorities and confirms sort=priority returns them in high→medium→low order.
+
+- [x] Add priority UI: add a priority selector (three buttons or a dropdown: High, Medium, Low) to the AddTodo component, defaulting to Medium. Display priority on each TodoItem as a colored indicator — red dot/badge for High, yellow for Medium, green/gray for Low. Add the ability to change priority on an existing todo by clicking the priority indicator. **Verify:** Use the browser to create a High priority todo, confirm it shows a red indicator. Create a Low priority todo, confirm green/gray indicator. Click the indicator to change priority and confirm it updates.
+
+- [x] Add search and filter functionality to the API: update GET `/api/todos` to support `?search=<text>` (case-insensitive search on title), `?status=active` (completed=false), `?status=completed` (completed=true), and `?priority=high|medium|low` filter. These query params should be combinable. **Verify:** Write tests in `test/` that create several todos with different statuses and priorities, then test each filter individually and in combination.
+
+- [x] Add search and filter UI: add a search bar at the top of the todo list with a magnifying glass icon that filters todos as the user types (debounced, 300ms). Below the search bar, add filter chips/buttons for status (All, Active, Completed) and priority (All, High, Medium, Low). Active filters should be visually highlighted. The filters should update the displayed list by calling the API with the appropriate query params. **Verify:** Use the browser to create several todos with different priorities and statuses. Type in the search bar and confirm filtering works. Click the "Completed" filter and confirm only completed todos show. Click "High" priority filter and confirm only high-priority todos show.
+
+- [x] Update export functionality: update the JSON and CSV export endpoints to include `due_date` and `priority` fields in the output. Update the CSV header row accordingly. **Verify:** Write a test that creates todos with due dates and priorities, exports as JSON and CSV, and confirms the new fields are present in the output.
