@@ -46,7 +46,25 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const result = await pool.query(`SELECT * FROM todos ${whereClause} ${orderClause}`, params);
-    res.json(result.rows);
+    const todos = result.rows;
+
+    if (todos.length > 0) {
+      const todoIds = todos.map((t: any) => t.id);
+      const tagsResult = await pool.query(
+        'SELECT tt.todo_id, t.id, t.name, t.color FROM todo_tags tt JOIN tags t ON t.id = tt.tag_id WHERE tt.todo_id = ANY($1) ORDER BY t.name ASC',
+        [todoIds]
+      );
+      const tagsByTodoId: Record<number, any[]> = {};
+      for (const row of tagsResult.rows) {
+        if (!tagsByTodoId[row.todo_id]) tagsByTodoId[row.todo_id] = [];
+        tagsByTodoId[row.todo_id].push({ id: row.id, name: row.name, color: row.color });
+      }
+      for (const todo of todos) {
+        todo.tags = tagsByTodoId[todo.id] || [];
+      }
+    }
+
+    res.json(todos);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch todos' });
   }

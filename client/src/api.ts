@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Todo, Subtask } from './types';
+import type { Todo, Subtask, Tag } from './types';
 
 const api = axios.create({
   baseURL: '/api/todos',
@@ -66,6 +66,25 @@ export async function toggleSubtask(todoId: number, subtask: Subtask): Promise<S
 
 export async function deleteSubtask(todoId: number, subtaskId: number): Promise<void> {
   await api.delete(`/${todoId}/subtasks/${subtaskId}`);
+}
+
+export async function fetchTags(): Promise<Tag[]> {
+  const { data } = await axios.get<Tag[]>('/api/tags');
+  return data;
+}
+
+export async function createTag(name: string, color?: string): Promise<Tag> {
+  const { data } = await axios.post<Tag>('/api/tags', { name, color });
+  return data;
+}
+
+export async function addTagToTodo(todoId: number, tagId: number): Promise<Tag[]> {
+  const { data } = await api.post<Tag[]>(`/${todoId}/tags`, { tag_id: tagId });
+  return data;
+}
+
+export async function removeTagFromTodo(todoId: number, tagId: number): Promise<void> {
+  await api.delete(`/${todoId}/tags/${tagId}`);
 }
 
 export function exportJsonUrl(): string {

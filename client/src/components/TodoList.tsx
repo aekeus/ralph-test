@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import type { Todo } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, reorderTodos, exportJsonUrl, exportCsvUrl } from '../api';
+import type { Todo, Tag } from '../types';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, reorderTodos, exportJsonUrl, exportCsvUrl, fetchTags, createTag, addTagToTodo, removeTagFromTodo } from '../api';
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
@@ -25,6 +25,7 @@ export default function TodoList() {
   const [toasts, setToasts] = useState<(ToastItem & { todo: Todo })[]>([]);
   const toastIdCounter = useRef(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const addTodoInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,9 +51,19 @@ export default function TodoList() {
     return params;
   }, [searchQuery, statusFilter, priorityFilter, sortOrder]);
 
+  const loadAllTags = useCallback(async () => {
+    try {
+      const tags = await fetchTags();
+      setAllTags(tags);
+    } catch {
+      // silently fail - tags are supplementary
+    }
+  }, []);
+
   useEffect(() => {
     loadTodos();
-  }, [loadTodos]);
+    loadAllTags();
+  }, [loadTodos, loadAllTags]);
 
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -201,6 +212,38 @@ export default function TodoList() {
     }
   }
 
+  async function handleAddTag(todoId: number, tag: Tag) {
+    try {
+      setError(null);
+      const updatedTags = await addTagToTodo(todoId, tag.id);
+      setTodos((prev) => prev.map((t) => (t.id === todoId ? { ...t, tags: updatedTags } : t)));
+    } catch {
+      setError('Failed to add tag');
+    }
+  }
+
+  async function handleCreateAndAddTag(todoId: number, name: string) {
+    try {
+      setError(null);
+      const newTag = await createTag(name);
+      setAllTags((prev) => [...prev, newTag].sort((a, b) => a.name.localeCompare(b.name)));
+      const updatedTags = await addTagToTodo(todoId, newTag.id);
+      setTodos((prev) => prev.map((t) => (t.id === todoId ? { ...t, tags: updatedTags } : t)));
+    } catch {
+      setError('Failed to create tag');
+    }
+  }
+
+  async function handleRemoveTag(todoId: number, tagId: number) {
+    try {
+      setError(null);
+      await removeTagFromTodo(todoId, tagId);
+      setTodos((prev) => prev.map((t) => (t.id === todoId ? { ...t, tags: (t.tags || []).filter((tag) => tag.id !== tagId) } : t)));
+    } catch {
+      setError('Failed to remove tag');
+    }
+  }
+
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchQuery(e.target.value);
   }
@@ -327,6 +370,10 @@ export default function TodoList() {
                           onDelete={handleDelete}
                           onPriorityChange={handlePriorityChange}
                           onTitleChange={handleTitleChange}
+                          allTags={allTags}
+                          onAddTag={handleAddTag}
+                          onCreateAndAddTag={handleCreateAndAddTag}
+                          onRemoveTag={handleRemoveTag}
                           isNew={newTodoIds.current.has(todo.id)}
                           onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
                           dragHandleProps={provided.dragHandleProps}

@@ -1,3 +1,9 @@
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+}
+
 export interface Todo {
   id: number;
   title: string;
@@ -7,6 +13,7 @@ export interface Todo {
   position: number | null;
   created_at: string;
   updated_at: string;
+  tags: Tag[];
 }
 
 export interface Subtask {
