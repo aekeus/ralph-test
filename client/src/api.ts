@@ -10,8 +10,8 @@ export async function fetchTodos(): Promise<Todo[]> {
   return data;
 }
 
-export async function addTodo(title: string): Promise<Todo> {
-  const { data } = await api.post<Todo>('/', { title });
+export async function addTodo(title: string, dueDate?: string): Promise<Todo> {
+  const { data } = await api.post<Todo>('/', { title, due_date: dueDate ?? null });
   return data;
 }
 

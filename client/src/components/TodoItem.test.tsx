@@ -15,6 +15,7 @@ const baseTodo: Todo = {
   id: 1,
   title: 'Test todo',
   completed: false,
+  due_date: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
@@ -177,6 +178,82 @@ describe('TodoItem', () => {
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
     const svg = document.querySelector('.todo-checkbox-custom svg');
     expect(svg).toBeInTheDocument();
+  });
+});
+
+function getYesterday(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getTomorrow(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+describe('TodoItem due date badge', () => {
+  it('does not render a due date badge when due_date is null', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.queryByTestId('due-date-badge')).not.toBeInTheDocument();
+  });
+
+  it('renders overdue badge in red for past due date on incomplete todo', () => {
+    const todo = { ...baseTodo, due_date: getYesterday() };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const badge = screen.getByTestId('due-date-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent('Overdue');
+    expect(badge).toHaveClass('due-date-badge--overdue');
+  });
+
+  it('renders today badge in amber for todo due today', () => {
+    const todo = { ...baseTodo, due_date: getToday() };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const badge = screen.getByTestId('due-date-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('due-date-badge--today');
+    expect(badge).toHaveTextContent(/^Due:/);
+  });
+
+  it('renders future badge for todo due tomorrow', () => {
+    const todo = { ...baseTodo, due_date: getTomorrow() };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const badge = screen.getByTestId('due-date-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('due-date-badge--future');
+    expect(badge).toHaveTextContent(/^Due:/);
+  });
+
+  it('does not show overdue for completed todo with past due date', () => {
+    const todo = { ...baseTodo, completed: true, due_date: getYesterday() };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const badge = screen.getByTestId('due-date-badge');
+    expect(badge).not.toHaveClass('due-date-badge--overdue');
+  });
+});
+
+describe('Due date badge CSS styles', () => {
+  it('styles due-date-badge with pill shape', () => {
+    expect(appCss).toMatch(/\.due-date-badge\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+  });
+
+  it('styles overdue badge with red background', () => {
+    expect(appCss).toMatch(/\.due-date-badge--overdue\s*\{[^}]*background-color:\s*#fee2e2/);
+  });
+
+  it('styles today badge with amber background', () => {
+    expect(appCss).toMatch(/\.due-date-badge--today\s*\{[^}]*background-color:\s*#fef3c7/);
+  });
+
+  it('styles future badge with neutral background', () => {
+    expect(appCss).toMatch(/\.due-date-badge--future\s*\{[^}]*background-color:\s*var\(--color-gray-100\)/);
   });
 });
 

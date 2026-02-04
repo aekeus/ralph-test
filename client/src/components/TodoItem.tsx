@@ -10,9 +10,31 @@ interface TodoItemProps {
   onAnimationEnd?: () => void;
 }
 
+function toDateOnly(dateStr: string): string {
+  return dateStr.slice(0, 10);
+}
+
+function getDueDateStatus(dueDate: string, completed: boolean): 'overdue' | 'today' | 'future' {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const dueDateOnly = toDateOnly(dueDate);
+  if (!completed && dueDateOnly < todayStr) return 'overdue';
+  if (dueDateOnly === todayStr) return 'today';
+  return 'future';
+}
+
+function formatDueDate(dateStr: string): string {
+  const datePart = toDateOnly(dateStr);
+  const [year, month, day] = datePart.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export default function TodoItem({ todo, onToggle, onDelete, isNew, onAnimationEnd }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
 
   return (
     <>
@@ -33,6 +55,11 @@ export default function TodoItem({ todo, onToggle, onDelete, isNew, onAnimationE
             <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
           </label>
           <div className="todo-item-actions">
+            {todo.due_date && dueDateStatus && (
+              <span className={`due-date-badge due-date-badge--${dueDateStatus}`} data-testid="due-date-badge">
+                {dueDateStatus === 'overdue' ? 'Overdue' : `Due: ${formatDueDate(todo.due_date)}`}
+              </span>
+            )}
             <button
               className={`subtask-toggle${expanded ? ' subtask-toggle--expanded' : ''}`}
               onClick={() => setExpanded(!expanded)}

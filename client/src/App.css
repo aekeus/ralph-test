@@ -107,6 +107,23 @@
   transform: translateX(4px);
 }
 
+.add-todo .add-todo-date {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.add-todo .add-todo-date:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
 .add-todo .add-todo-btn {
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-full);
@@ -268,6 +285,50 @@
 .todo-item-actions {
   display: flex;
   gap: var(--space-sm);
+}
+
+/* ===== Due Date Badge ===== */
+.due-date-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.due-date-badge--future {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.due-date-badge--today {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.due-date-badge--overdue {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .due-date-badge--future {
+    background-color: var(--color-gray-700);
+    color: var(--color-gray-300);
+  }
+
+  .due-date-badge--today {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+  }
+
+  .due-date-badge--overdue {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
 }
 
 /* ===== Subtask Toggle Button ===== */

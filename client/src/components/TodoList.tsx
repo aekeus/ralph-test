@@ -27,10 +27,10 @@ export default function TodoList() {
     }
   }
 
-  async function handleAdd(title: string) {
+  async function handleAdd(title: string, dueDate?: string) {
     try {
       setError(null);
-      const todo = await addTodo(title);
+      const todo = await addTodo(title, dueDate);
       newTodoIds.current.add(todo.id);
       setTodos((prev) => [todo, ...prev]);
     } catch {

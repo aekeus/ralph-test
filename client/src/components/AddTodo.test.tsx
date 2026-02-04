@@ -14,13 +14,18 @@ describe('AddTodo', () => {
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
   });
 
+  it('renders a date input for due date', () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    expect(screen.getByLabelText('Due date')).toBeInTheDocument();
+  });
+
   it('calls onAdd with trimmed title on submit', async () => {
     const onAdd = vi.fn();
     render(<AddTodo onAdd={onAdd} />);
     const input = screen.getByPlaceholderText('Add a new todo...');
     await userEvent.type(input, '  New todo  ');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
-    expect(onAdd).toHaveBeenCalledWith('New todo');
+    expect(onAdd).toHaveBeenCalledWith('New todo', undefined);
   });
 
   it('clears the input after submit', async () => {
@@ -36,6 +41,25 @@ describe('AddTodo', () => {
     render(<AddTodo onAdd={onAdd} />);
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
     expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it('calls onAdd with title and due date when date is set', async () => {
+    const onAdd = vi.fn();
+    render(<AddTodo onAdd={onAdd} />);
+    await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'Todo with date');
+    const dateInput = screen.getByLabelText('Due date');
+    await userEvent.type(dateInput, '2025-03-15');
+    await userEvent.click(screen.getByRole('button', { name: /add/i }));
+    expect(onAdd).toHaveBeenCalledWith('Todo with date', '2025-03-15');
+  });
+
+  it('clears the date input after submit', async () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'Test');
+    const dateInput = screen.getByLabelText('Due date');
+    await userEvent.type(dateInput, '2025-03-15');
+    await userEvent.click(screen.getByRole('button', { name: /add/i }));
+    expect(dateInput).toHaveValue('');
   });
 
   it('does not call onAdd with whitespace-only input', async () => {
