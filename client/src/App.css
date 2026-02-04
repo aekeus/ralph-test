@@ -198,29 +198,27 @@
   border-color: #16a34a;
 }
 
-@media (prefers-color-scheme: dark) {
-  .filter-chip:hover {
+[data-theme="dark"] .filter-chip:hover {
     background-color: var(--color-gray-700);
   }
 
-  .filter-chip--high.filter-chip--active {
+  [data-theme="dark"] .filter-chip--high.filter-chip--active {
     background-color: rgba(239, 68, 68, 0.3);
     border-color: #f87171;
     color: #f87171;
   }
 
-  .filter-chip--medium.filter-chip--active {
+  [data-theme="dark"] .filter-chip--medium.filter-chip--active {
     background-color: rgba(251, 191, 36, 0.3);
     border-color: #fbbf24;
     color: #fbbf24;
   }
 
-  .filter-chip--low.filter-chip--active {
+  [data-theme="dark"] .filter-chip--low.filter-chip--active {
     background-color: rgba(34, 197, 94, 0.3);
     border-color: #4ade80;
     color: #4ade80;
   }
-}
 
 .add-todo {
   display: flex;
@@ -402,41 +400,39 @@
   background-color: #22c55e;
 }
 
-@media (prefers-color-scheme: dark) {
-  .priority-btn:hover {
+[data-theme="dark"] .priority-btn:hover {
     background-color: var(--color-gray-700);
   }
 
-  .priority-btn--high.priority-btn--active {
+  [data-theme="dark"] .priority-btn--high.priority-btn--active {
     background-color: rgba(239, 68, 68, 0.15);
     color: #f87171;
   }
 
-  .priority-btn--medium.priority-btn--active {
+  [data-theme="dark"] .priority-btn--medium.priority-btn--active {
     background-color: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
   }
 
-  .priority-btn--low.priority-btn--active {
+  [data-theme="dark"] .priority-btn--low.priority-btn--active {
     background-color: rgba(34, 197, 94, 0.15);
     color: #4ade80;
   }
 
-  .priority-indicator--high {
+  [data-theme="dark"] .priority-indicator--high {
     background-color: rgba(239, 68, 68, 0.15);
     color: #f87171;
   }
 
-  .priority-indicator--medium {
+  [data-theme="dark"] .priority-indicator--medium {
     background-color: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
   }
 
-  .priority-indicator--low {
+  [data-theme="dark"] .priority-indicator--low {
     background-color: rgba(34, 197, 94, 0.15);
     color: #4ade80;
   }
-}
 
 /* ===== Drag Handle ===== */
 .drag-handle {
@@ -466,12 +462,10 @@
   transform: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .drag-handle:hover {
+[data-theme="dark"] .drag-handle:hover {
     color: var(--color-gray-300);
     background-color: var(--color-gray-700);
   }
-}
 
 /* ===== Todo Item Card ===== */
 .todo-item {
@@ -658,22 +652,20 @@
   color: #991b1b;
 }
 
-@media (prefers-color-scheme: dark) {
-  .due-date-badge--future {
+[data-theme="dark"] .due-date-badge--future {
     background-color: var(--color-gray-700);
     color: var(--color-gray-300);
   }
 
-  .due-date-badge--today {
+  [data-theme="dark"] .due-date-badge--today {
     background-color: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
   }
 
-  .due-date-badge--overdue {
+  [data-theme="dark"] .due-date-badge--overdue {
     background-color: rgba(239, 68, 68, 0.15);
     color: #f87171;
   }
-}
 
 /* ===== Subtask Toggle Button ===== */
 .subtask-toggle {
@@ -943,11 +935,9 @@
   transform: scale(0.97);
 }
 
-@media (prefers-color-scheme: dark) {
-  .delete-modal-cancel:hover {
+[data-theme="dark"] .delete-modal-cancel:hover {
     background-color: var(--color-gray-700);
   }
-}
 
 .export-buttons {
   display: flex;
@@ -989,17 +979,83 @@
   line-height: 1;
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn-export {
+[data-theme="dark"] .btn-export {
     color: var(--color-primary-300);
     border-color: var(--color-primary-400);
   }
 
-  .btn-export:hover {
+  [data-theme="dark"] .btn-export:hover {
     background-color: rgba(99, 102, 241, 0.1);
     border-color: var(--color-primary-300);
     color: var(--color-primary-200);
   }
+
+/* ===== Theme Toggle Button ===== */
+.btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary-600);
+  background-color: transparent;
+  border: 1.5px solid var(--color-primary-300);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.btn-theme-toggle:hover {
+  background-color: var(--color-primary-50);
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-700);
+  box-shadow: var(--shadow-sm);
+  transform: scale(1.05);
+}
+
+.btn-theme-toggle:active {
+  transform: scale(0.95);
+}
+
+[data-theme="dark"] .btn-theme-toggle {
+  color: var(--color-primary-300);
+  border-color: var(--color-primary-400);
+}
+
+[data-theme="dark"] .btn-theme-toggle:hover {
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: var(--color-primary-300);
+  color: var(--color-primary-200);
+}
+
+.theme-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Smooth transitions for theme-affected elements */
+.todo-item,
+.search-bar,
+.add-todo,
+.subtask-item,
+.delete-modal,
+.filter-chip,
+.todo-title-edit {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+              box-shadow var(--transition-normal), transform var(--transition-normal),
+              opacity var(--transition-normal);
+}
+
+[data-theme="dark"] .todo-title-edit {
+  background-color: var(--color-gray-700);
 }
 
 .error {

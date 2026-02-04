@@ -6,6 +6,7 @@ import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, update
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
+import ThemeToggle from './ThemeToggle';
 
 export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -158,6 +159,7 @@ export default function TodoList() {
               Export CSV
             </button>
           </a>
+          <ThemeToggle />
         </div>
       </header>
       {error && <p className="error">{error}</p>}

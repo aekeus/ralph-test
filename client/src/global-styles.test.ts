@@ -77,12 +77,12 @@ describe('Global CSS reset and design tokens', () => {
   });
 
   describe('Dark mode support', () => {
-    it('includes prefers-color-scheme: dark media query', () => {
-      expect(indexCss).toContain('prefers-color-scheme: dark');
+    it('includes data-theme dark selector', () => {
+      expect(indexCss).toContain('[data-theme="dark"]');
     });
 
     it('overrides semantic tokens in dark mode', () => {
-      const darkBlock = indexCss.split('prefers-color-scheme: dark')[1];
+      const darkBlock = indexCss.split('[data-theme="dark"]')[1];
       expect(darkBlock).toContain('--color-bg:');
       expect(darkBlock).toContain('--color-text:');
       expect(darkBlock).toContain('--color-surface:');
