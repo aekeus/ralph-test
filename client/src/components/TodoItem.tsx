@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Todo } from '../types';
 import SubtaskList from './SubtaskList';
 
@@ -7,6 +7,7 @@ interface TodoItemProps {
   onToggle: (todo: Todo) => void;
   onDelete: (id: number) => void;
   onPriorityChange?: (id: number, priority: 'low' | 'medium' | 'high') => void;
+  onTitleChange?: (id: number, title: string) => void;
   isNew?: boolean;
   onAnimationEnd?: () => void;
 }
@@ -43,9 +44,18 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 };
 
-export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, isNew, onAnimationEnd }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, isNew, onAnimationEnd }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(todo.title);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editing]);
 
   const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
   const priority = todo.priority || 'medium';
@@ -53,6 +63,28 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, i
   function handlePriorityClick() {
     if (onPriorityChange) {
       onPriorityChange(todo.id, PRIORITY_CYCLE[priority]);
+    }
+  }
+
+  function handleTitleClick() {
+    setEditTitle(todo.title);
+    setEditing(true);
+  }
+
+  function handleTitleSave() {
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== todo.title && onTitleChange) {
+      onTitleChange(todo.id, trimmed);
+    }
+    setEditing(false);
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      setEditTitle(todo.title);
+      setEditing(false);
     }
   }
 
@@ -72,8 +104,29 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, i
                 <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
           </label>
+          {editing ? (
+            <input
+              ref={editInputRef}
+              type="text"
+              className="todo-title-edit"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              aria-label="Edit todo title"
+            />
+          ) : (
+            <span
+              className={`todo-title${todo.completed ? ' completed' : ''}`}
+              onClick={handleTitleClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleTitleClick(); }}
+            >
+              {todo.title}
+            </span>
+          )}
           <div className="todo-item-actions">
             <button
               type="button"

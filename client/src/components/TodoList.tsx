@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Todo } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, exportJsonUrl, exportCsvUrl } from '../api';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, exportJsonUrl, exportCsvUrl } from '../api';
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
@@ -70,6 +70,16 @@ export default function TodoList() {
       setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     } catch {
       setError('Failed to update priority');
+    }
+  }
+
+  async function handleTitleChange(id: number, title: string) {
+    try {
+      setError(null);
+      const updated = await updateTodoTitle(id, title);
+      setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch {
+      setError('Failed to update title');
     }
   }
 
@@ -178,6 +188,7 @@ export default function TodoList() {
               onToggle={handleToggle}
               onDelete={handleDelete}
               onPriorityChange={handlePriorityChange}
+              onTitleChange={handleTitleChange}
               isNew={newTodoIds.current.has(todo.id)}
               onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
             />

@@ -551,3 +551,106 @@ describe('Delete button CSS styles', () => {
     expect(appCss).toMatch(/\.delete-modal-confirm\s*\{[^}]*background-color:\s*var\(--color-danger-500\)/);
   });
 });
+
+describe('TodoItem inline editing', () => {
+  it('enters edit mode when title is clicked', async () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    expect(screen.getByLabelText('Edit todo title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Edit todo title')).toHaveValue('Test todo');
+  });
+
+  it('pre-fills input with current title', async () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    expect(input).toHaveValue('Test todo');
+  });
+
+  it('focuses the input when entering edit mode', async () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    expect(input).toHaveFocus();
+  });
+
+  it('calls onTitleChange and exits edit mode on Enter', async () => {
+    const onTitleChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Updated title{Enter}');
+    expect(onTitleChange).toHaveBeenCalledWith(1, 'Updated title');
+    expect(screen.queryByLabelText('Edit todo title')).not.toBeInTheDocument();
+  });
+
+  it('calls onTitleChange and exits edit mode on blur', async () => {
+    const onTitleChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Updated title');
+    await userEvent.tab();
+    expect(onTitleChange).toHaveBeenCalledWith(1, 'Updated title');
+    expect(screen.queryByLabelText('Edit todo title')).not.toBeInTheDocument();
+  });
+
+  it('cancels edit and restores original title on Escape', async () => {
+    const onTitleChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Changed text{Escape}');
+    expect(onTitleChange).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('Edit todo title')).not.toBeInTheDocument();
+    expect(screen.getByText('Test todo')).toBeInTheDocument();
+  });
+
+  it('does not call onTitleChange when title is unchanged', async () => {
+    const onTitleChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    await userEvent.type(input, '{Enter}');
+    expect(onTitleChange).not.toHaveBeenCalled();
+  });
+
+  it('does not call onTitleChange when title is only whitespace', async () => {
+    const onTitleChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    await userEvent.clear(input);
+    await userEvent.type(input, '   {Enter}');
+    expect(onTitleChange).not.toHaveBeenCalled();
+  });
+
+  it('applies todo-title-edit class to the edit input', async () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    await userEvent.click(screen.getByText('Test todo'));
+    const input = screen.getByLabelText('Edit todo title');
+    expect(input).toHaveClass('todo-title-edit');
+  });
+});
+
+describe('Inline editing CSS styles', () => {
+  it('styles todo-title with cursor text', () => {
+    expect(appCss).toMatch(/\.todo-title\s*\{[^}]*cursor:\s*text/);
+  });
+
+  it('styles todo-title-edit with border and rounded corners', () => {
+    expect(appCss).toMatch(/\.todo-title-edit\s*\{[^}]*border:\s*1px solid var\(--color-primary-300\)/);
+    expect(appCss).toMatch(/\.todo-title-edit\s*\{[^}]*border-radius:\s*var\(--radius-md\)/);
+  });
+
+  it('styles todo-title-edit with subtle background', () => {
+    expect(appCss).toMatch(/\.todo-title-edit\s*\{[^}]*background-color:\s*var\(--color-gray-50\)/);
+  });
+
+  it('styles todo-title-edit focus with box-shadow', () => {
+    expect(appCss).toMatch(/\.todo-title-edit:focus\s*\{[^}]*box-shadow:/);
+  });
+});
