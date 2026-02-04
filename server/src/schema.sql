@@ -20,3 +20,15 @@ CREATE TABLE IF NOT EXISTS subtasks (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    color VARCHAR(7) DEFAULT '#6366f1'
+);
+
+CREATE TABLE IF NOT EXISTS todo_tags (
+    todo_id INTEGER REFERENCES todos(id) ON DELETE CASCADE,
+    tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (todo_id, tag_id)
+);

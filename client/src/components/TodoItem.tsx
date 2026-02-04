@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import type { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
-import type { Todo } from '../types';
+import type { Todo, Tag } from '../types';
 import SubtaskList from './SubtaskList';
+import TagInput from './TagInput';
 
 interface TodoItemProps {
   todo: Todo;
@@ -9,6 +10,10 @@ interface TodoItemProps {
   onDelete: (id: number) => void;
   onPriorityChange?: (id: number, priority: 'low' | 'medium' | 'high') => void;
   onTitleChange?: (id: number, title: string) => void;
+  allTags: Tag[];
+  onAddTag: (todoId: number, tag: Tag) => void;
+  onCreateAndAddTag: (todoId: number, name: string) => void;
+  onRemoveTag: (todoId: number, tagId: number) => void;
   isNew?: boolean;
   onAnimationEnd?: () => void;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
@@ -50,7 +55,7 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 };
 
-export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, allTags, onAddTag, onCreateAndAddTag, onRemoveTag, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -174,6 +179,29 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
               <span className="delete-btn-icon" aria-hidden="true">🗑</span>
             </button>
           </div>
+        </div>
+        {todo.tags && todo.tags.length > 0 && (
+          <div className="todo-tags-display">
+            {todo.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="tag-chip tag-chip--readonly"
+                style={{ backgroundColor: tag.color + '22', color: tag.color, borderColor: tag.color + '44' }}
+                data-testid="tag-chip"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="todo-tag-input-row">
+          <TagInput
+            allTags={allTags}
+            currentTags={todo.tags || []}
+            onAddTag={(tag) => onAddTag(todo.id, tag)}
+            onCreateAndAddTag={(name) => onCreateAndAddTag(todo.id, name)}
+            onRemoveTag={(tagId) => onRemoveTag(todo.id, tagId)}
+          />
         </div>
         {expanded && (
           <div className="subtask-section">

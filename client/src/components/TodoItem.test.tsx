@@ -20,6 +20,14 @@ const baseTodo: Todo = {
   position: 0,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
+  tags: [],
+};
+
+const defaultTagProps = {
+  allTags: [],
+  onAddTag: vi.fn(),
+  onCreateAndAddTag: vi.fn(),
+  onRemoveTag: vi.fn(),
 };
 
 beforeEach(() => {
@@ -28,44 +36,44 @@ beforeEach(() => {
 
 describe('TodoItem', () => {
   it('renders the todo title', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     expect(screen.getByText('Test todo')).toBeInTheDocument();
   });
 
   it('renders a drag handle', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const handle = document.querySelector('.drag-handle');
     expect(handle).toBeInTheDocument();
     expect(handle).toHaveAttribute('aria-label', 'Drag to reorder');
   });
 
   it('renders an unchecked checkbox for incomplete todo', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).not.toBeChecked();
   });
 
   it('renders a checked checkbox for completed todo', () => {
     const completed = { ...baseTodo, completed: true };
-    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 
   it('applies completed class when todo is completed', () => {
     const completed = { ...baseTodo, completed: true };
-    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     expect(screen.getByText('Test todo')).toHaveClass('completed');
   });
 
   it('calls onToggle when checkbox is clicked', async () => {
     const onToggle = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={onToggle} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={onToggle} onDelete={vi.fn()} {...defaultTagProps} />);
     await userEvent.click(screen.getByRole('checkbox'));
     expect(onToggle).toHaveBeenCalledWith(baseTodo);
   });
 
   it('renders delete button as icon-only with trash icon', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
     expect(deleteBtn).toHaveClass('delete-btn');
     const icon = deleteBtn.querySelector('.delete-btn-icon');
@@ -75,7 +83,7 @@ describe('TodoItem', () => {
 
   it('shows modal overlay when delete button is clicked', async () => {
     const onDelete = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} {...defaultTagProps} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(screen.getByText('Delete this todo and its subtasks?')).toBeInTheDocument();
     expect(document.querySelector('.delete-modal-overlay')).toBeInTheDocument();
@@ -87,7 +95,7 @@ describe('TodoItem', () => {
 
   it('calls onDelete when confirm delete is clicked in modal', async () => {
     const onDelete = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} {...defaultTagProps} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
     expect(onDelete).toHaveBeenCalledWith(1);
@@ -95,7 +103,7 @@ describe('TodoItem', () => {
 
   it('closes modal when cancel button is clicked', async () => {
     const onDelete = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} {...defaultTagProps} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     await userEvent.click(screen.getByRole('button', { name: /cancel delete/i }));
     expect(onDelete).not.toHaveBeenCalled();
@@ -105,7 +113,7 @@ describe('TodoItem', () => {
 
   it('closes modal when clicking the overlay backdrop', async () => {
     const onDelete = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} {...defaultTagProps} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     const overlay = document.querySelector('.delete-modal-overlay')!;
     await userEvent.click(overlay);
@@ -115,7 +123,7 @@ describe('TodoItem', () => {
 
   it('toggles subtask list visibility when subtasks button is clicked', async () => {
     vi.mocked(api.fetchSubtasks).mockResolvedValue([]);
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
 
     expect(screen.queryByPlaceholderText('Add a subtask...')).not.toBeInTheDocument();
 
@@ -128,7 +136,7 @@ describe('TodoItem', () => {
 
   it('applies expanded class to toggle button when subtasks are visible', async () => {
     vi.mocked(api.fetchSubtasks).mockResolvedValue([]);
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
 
     const toggleBtn = screen.getByRole('button', { name: /toggle subtasks/i });
     expect(toggleBtn).not.toHaveClass('subtask-toggle--expanded');
@@ -142,7 +150,7 @@ describe('TodoItem', () => {
 
   it('renders subtask section with accent border wrapper when expanded', async () => {
     vi.mocked(api.fetchSubtasks).mockResolvedValue([]);
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
 
     expect(document.querySelector('.subtask-section')).not.toBeInTheDocument();
 
@@ -151,7 +159,7 @@ describe('TodoItem', () => {
   });
 
   it('renders a toggle arrow span inside the subtasks button', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const arrow = document.querySelector('.subtask-toggle-arrow');
     expect(arrow).toBeInTheDocument();
     expect(arrow).toHaveAttribute('aria-hidden', 'true');
@@ -159,32 +167,32 @@ describe('TodoItem', () => {
 
   it('adds todo-item--completed class when todo is completed', () => {
     const completed = { ...baseTodo, completed: true };
-    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const li = screen.getByRole('listitem');
     expect(li).toHaveClass('todo-item--completed');
   });
 
   it('does not add todo-item--completed class when todo is not completed', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const li = screen.getByRole('listitem');
     expect(li).not.toHaveClass('todo-item--completed');
   });
 
   it('renders a custom checkbox visual element', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const customCheckbox = document.querySelector('.todo-checkbox-custom');
     expect(customCheckbox).toBeInTheDocument();
     expect(customCheckbox).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('renders the checkbox with todo-checkbox class', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).toHaveClass('todo-checkbox');
   });
 
   it('renders a checkmark SVG inside the custom checkbox', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const svg = document.querySelector('.todo-checkbox-custom svg');
     expect(svg).toBeInTheDocument();
   });
@@ -209,13 +217,13 @@ function getTomorrow(): string {
 
 describe('TodoItem due date badge', () => {
   it('does not render a due date badge when due_date is null', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     expect(screen.queryByTestId('due-date-badge')).not.toBeInTheDocument();
   });
 
   it('renders overdue badge in red for past due date on incomplete todo', () => {
     const todo = { ...baseTodo, due_date: getYesterday() };
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent('Overdue');
@@ -224,7 +232,7 @@ describe('TodoItem due date badge', () => {
 
   it('renders today badge in amber for todo due today', () => {
     const todo = { ...baseTodo, due_date: getToday() };
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('due-date-badge--today');
@@ -233,7 +241,7 @@ describe('TodoItem due date badge', () => {
 
   it('renders soon badge in blue for todo due tomorrow', () => {
     const todo = { ...baseTodo, due_date: getTomorrow() };
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('due-date-badge--soon');
@@ -245,7 +253,7 @@ describe('TodoItem due date badge', () => {
     farFuture.setDate(farFuture.getDate() + 10);
     const farFutureStr = `${farFuture.getFullYear()}-${String(farFuture.getMonth() + 1).padStart(2, '0')}-${String(farFuture.getDate()).padStart(2, '0')}`;
     const todo = { ...baseTodo, due_date: farFutureStr };
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('due-date-badge--future');
@@ -254,7 +262,7 @@ describe('TodoItem due date badge', () => {
 
   it('does not show overdue for completed todo with past due date', () => {
     const todo = { ...baseTodo, completed: true, due_date: getYesterday() };
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).not.toHaveClass('due-date-badge--overdue');
   });
@@ -386,26 +394,26 @@ describe('Subtask section CSS styles', () => {
 
 describe('Entrance animation', () => {
   it('applies todo-item--enter class when isNew is true', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={true} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isNew={true} />);
     const li = screen.getByRole('listitem');
     expect(li).toHaveClass('todo-item--enter');
   });
 
   it('does not apply todo-item--enter class when isNew is false', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={false} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isNew={false} />);
     const li = screen.getByRole('listitem');
     expect(li).not.toHaveClass('todo-item--enter');
   });
 
   it('does not apply todo-item--enter class when isNew is undefined', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const li = screen.getByRole('listitem');
     expect(li).not.toHaveClass('todo-item--enter');
   });
 
   it('calls onAnimationEnd when animation completes', () => {
     const onAnimationEnd = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={true} onAnimationEnd={onAnimationEnd} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} isNew={true} onAnimationEnd={onAnimationEnd} />);
     const li = screen.getByRole('listitem');
     li.dispatchEvent(new Event('animationend', { bubbles: true }));
     expect(onAnimationEnd).toHaveBeenCalled();
@@ -426,7 +434,7 @@ describe('Entrance animation CSS styles', () => {
 
 describe('TodoItem priority indicator', () => {
   it('renders a priority indicator with the correct priority label', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const indicator = screen.getByTestId('priority-indicator');
     expect(indicator).toBeInTheDocument();
     expect(indicator).toHaveTextContent('Medium');
@@ -434,7 +442,7 @@ describe('TodoItem priority indicator', () => {
 
   it('renders high priority indicator with correct class', () => {
     const highTodo = { ...baseTodo, priority: 'high' as const };
-    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const indicator = screen.getByTestId('priority-indicator');
     expect(indicator).toHaveClass('priority-indicator--high');
     expect(indicator).toHaveTextContent('High');
@@ -442,14 +450,14 @@ describe('TodoItem priority indicator', () => {
 
   it('renders low priority indicator with correct class', () => {
     const lowTodo = { ...baseTodo, priority: 'low' as const };
-    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const indicator = screen.getByTestId('priority-indicator');
     expect(indicator).toHaveClass('priority-indicator--low');
     expect(indicator).toHaveTextContent('Low');
   });
 
   it('renders a colored dot inside the priority indicator', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const dot = document.querySelector('.priority-dot');
     expect(dot).toBeInTheDocument();
     expect(dot).toHaveClass('priority-dot--medium');
@@ -457,21 +465,21 @@ describe('TodoItem priority indicator', () => {
 
   it('renders red dot for high priority', () => {
     const highTodo = { ...baseTodo, priority: 'high' as const };
-    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const dot = document.querySelector('.priority-dot');
     expect(dot).toHaveClass('priority-dot--high');
   });
 
   it('renders green dot for low priority', () => {
     const lowTodo = { ...baseTodo, priority: 'low' as const };
-    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const dot = document.querySelector('.priority-dot');
     expect(dot).toHaveClass('priority-dot--low');
   });
 
   it('calls onPriorityChange with next priority when indicator is clicked', async () => {
     const onPriorityChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onPriorityChange={onPriorityChange} />);
     await userEvent.click(screen.getByTestId('priority-indicator'));
     expect(onPriorityChange).toHaveBeenCalledWith(1, 'low');
   });
@@ -479,7 +487,7 @@ describe('TodoItem priority indicator', () => {
   it('cycles priority: high -> medium', async () => {
     const onPriorityChange = vi.fn();
     const highTodo = { ...baseTodo, priority: 'high' as const };
-    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onPriorityChange={onPriorityChange} />);
     await userEvent.click(screen.getByTestId('priority-indicator'));
     expect(onPriorityChange).toHaveBeenCalledWith(1, 'medium');
   });
@@ -487,13 +495,13 @@ describe('TodoItem priority indicator', () => {
   it('cycles priority: low -> high', async () => {
     const onPriorityChange = vi.fn();
     const lowTodo = { ...baseTodo, priority: 'low' as const };
-    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onPriorityChange={onPriorityChange} />);
     await userEvent.click(screen.getByTestId('priority-indicator'));
     expect(onPriorityChange).toHaveBeenCalledWith(1, 'high');
   });
 
   it('has accessible label on the priority indicator', () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
     const indicator = screen.getByTestId('priority-indicator');
     expect(indicator).toHaveAttribute('aria-label', 'Priority: Medium. Click to change.');
   });
@@ -588,21 +596,21 @@ describe('Delete button CSS styles', () => {
 
 describe('TodoItem inline editing', () => {
   it('enters edit mode when title is clicked', async () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={vi.fn()} />);
     await userEvent.click(screen.getByText('Test todo'));
     expect(screen.getByLabelText('Edit todo title')).toBeInTheDocument();
     expect(screen.getByLabelText('Edit todo title')).toHaveValue('Test todo');
   });
 
   it('pre-fills input with current title', async () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={vi.fn()} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     expect(input).toHaveValue('Test todo');
   });
 
   it('focuses the input when entering edit mode', async () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={vi.fn()} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     expect(input).toHaveFocus();
@@ -610,7 +618,7 @@ describe('TodoItem inline editing', () => {
 
   it('calls onTitleChange and exits edit mode on Enter', async () => {
     const onTitleChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={onTitleChange} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     await userEvent.clear(input);
@@ -621,7 +629,7 @@ describe('TodoItem inline editing', () => {
 
   it('calls onTitleChange and exits edit mode on blur', async () => {
     const onTitleChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={onTitleChange} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     await userEvent.clear(input);
@@ -633,7 +641,7 @@ describe('TodoItem inline editing', () => {
 
   it('cancels edit and restores original title on Escape', async () => {
     const onTitleChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={onTitleChange} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     await userEvent.clear(input);
@@ -645,7 +653,7 @@ describe('TodoItem inline editing', () => {
 
   it('does not call onTitleChange when title is unchanged', async () => {
     const onTitleChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={onTitleChange} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     await userEvent.type(input, '{Enter}');
@@ -654,7 +662,7 @@ describe('TodoItem inline editing', () => {
 
   it('does not call onTitleChange when title is only whitespace', async () => {
     const onTitleChange = vi.fn();
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={onTitleChange} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={onTitleChange} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     await userEvent.clear(input);
@@ -663,7 +671,7 @@ describe('TodoItem inline editing', () => {
   });
 
   it('applies todo-title-edit class to the edit input', async () => {
-    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onTitleChange={vi.fn()} />);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onTitleChange={vi.fn()} />);
     await userEvent.click(screen.getByText('Test todo'));
     const input = screen.getByLabelText('Edit todo title');
     expect(input).toHaveClass('todo-title-edit');
@@ -686,5 +694,32 @@ describe('Inline editing CSS styles', () => {
 
   it('styles todo-title-edit focus with box-shadow', () => {
     expect(appCss).toMatch(/\.todo-title-edit:focus\s*\{[^}]*box-shadow:/);
+  });
+});
+
+describe('TodoItem tag chips', () => {
+  it('renders tag chips when todo has tags', () => {
+    const todoWithTags = {
+      ...baseTodo,
+      tags: [
+        { id: 1, name: 'work', color: '#6366f1' },
+        { id: 2, name: 'urgent', color: '#ef4444' },
+      ],
+    };
+    render(<TodoItem todo={todoWithTags} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    const chips = screen.getAllByTestId('tag-chip');
+    expect(chips).toHaveLength(2);
+    expect(chips[0]).toHaveTextContent('work');
+    expect(chips[1]).toHaveTextContent('urgent');
+  });
+
+  it('does not render tag display when todo has no tags', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.queryByTestId('tag-chip')).not.toBeInTheDocument();
+  });
+
+  it('renders tag input area', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.getByLabelText('Add tag')).toBeInTheDocument();
   });
 });
