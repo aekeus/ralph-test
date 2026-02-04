@@ -161,7 +161,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, completed, due_date, priority } = req.body;
+    const { title, completed, due_date, priority, notes } = req.body;
 
     const existing = await pool.query('SELECT * FROM todos WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
@@ -172,10 +172,11 @@ router.put('/:id', async (req: Request, res: Response) => {
     const updatedCompleted = completed !== undefined ? completed : existing.rows[0].completed;
     const updatedDueDate = due_date !== undefined ? (due_date || null) : existing.rows[0].due_date;
     const updatedPriority = priority !== undefined ? priority : existing.rows[0].priority;
+    const updatedNotes = notes !== undefined ? (notes || null) : existing.rows[0].notes;
 
     const result = await pool.query(
-      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
-      [updatedTitle, updatedCompleted, updatedDueDate, updatedPriority, id]
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      [updatedTitle, updatedCompleted, updatedDueDate, updatedPriority, updatedNotes, id]
     );
     res.json(result.rows[0]);
   } catch (err) {

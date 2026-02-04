@@ -17,6 +17,7 @@ const baseTodo: Todo = {
   completed: false,
   due_date: null,
   priority: 'medium',
+  notes: null,
   position: 0,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
@@ -694,6 +695,102 @@ describe('Inline editing CSS styles', () => {
 
   it('styles todo-title-edit focus with box-shadow', () => {
     expect(appCss).toMatch(/\.todo-title-edit:focus\s*\{[^}]*box-shadow:/);
+  });
+});
+
+describe('TodoItem notes', () => {
+  it('does not render notes indicator when notes is null', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.queryByTestId('notes-indicator')).not.toBeInTheDocument();
+  });
+
+  it('does not render notes indicator when notes is empty string', () => {
+    const todo = { ...baseTodo, notes: '' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.queryByTestId('notes-indicator')).not.toBeInTheDocument();
+  });
+
+  it('does not render notes indicator when notes is only whitespace', () => {
+    const todo = { ...baseTodo, notes: '   ' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.queryByTestId('notes-indicator')).not.toBeInTheDocument();
+  });
+
+  it('renders notes indicator when todo has notes', () => {
+    const todo = { ...baseTodo, notes: 'Some important note' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    expect(screen.getByTestId('notes-indicator')).toBeInTheDocument();
+  });
+
+  it('renders a Notes toggle button', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} />);
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    expect(btns.length).toBeGreaterThan(0);
+  });
+
+  it('opens notes textarea when Notes button is clicked', async () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={vi.fn()} />);
+    expect(screen.queryByLabelText('Todo notes')).not.toBeInTheDocument();
+
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    await userEvent.click(btns[btns.length - 1]);
+    expect(screen.getByLabelText('Todo notes')).toBeInTheDocument();
+  });
+
+  it('closes notes textarea when Notes button is clicked again with content', async () => {
+    const todo = { ...baseTodo, notes: 'Some content' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={vi.fn()} />);
+
+    // Open notes via the Notes text button
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    await userEvent.click(btns[btns.length - 1]);
+    expect(screen.getByLabelText('Todo notes')).toBeInTheDocument();
+
+    // Close by clicking the button again
+    await userEvent.click(btns[btns.length - 1]);
+    expect(screen.queryByLabelText('Todo notes')).not.toBeInTheDocument();
+  });
+
+  it('toggles notes textarea when notes indicator icon is clicked', async () => {
+    const todo = { ...baseTodo, notes: 'Some note' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByTestId('notes-indicator'));
+    expect(screen.getByLabelText('Todo notes')).toBeInTheDocument();
+    expect(screen.getByLabelText('Todo notes')).toHaveValue('Some note');
+  });
+
+  it('calls onNotesChange on blur when notes change', async () => {
+    const onNotesChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={onNotesChange} />);
+
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    await userEvent.click(btns[btns.length - 1]);
+    const textarea = screen.getByLabelText('Todo notes');
+    await userEvent.type(textarea, 'New note text');
+    await userEvent.tab();
+    expect(onNotesChange).toHaveBeenCalledWith(1, 'New note text');
+  });
+
+  it('does not call onNotesChange on blur when notes are unchanged', async () => {
+    const onNotesChange = vi.fn();
+    const todo = { ...baseTodo, notes: 'Existing note' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={onNotesChange} />);
+
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    await userEvent.click(btns[btns.length - 1]);
+    const textarea = screen.getByLabelText('Todo notes');
+    await userEvent.tab();
+    expect(onNotesChange).not.toHaveBeenCalled();
+  });
+
+  it('pre-fills textarea with existing notes', async () => {
+    const todo = { ...baseTodo, notes: 'My existing notes' };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} {...defaultTagProps} onNotesChange={vi.fn()} />);
+
+    const btns = screen.getAllByRole('button', { name: /toggle notes/i });
+    await userEvent.click(btns[btns.length - 1]);
+    expect(screen.getByLabelText('Todo notes')).toHaveValue('My existing notes');
   });
 });
 

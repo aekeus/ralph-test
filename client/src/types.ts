@@ -10,6 +10,7 @@ export interface Todo {
   completed: boolean;
   due_date: string | null;
   priority: 'low' | 'medium' | 'high';
+  notes: string | null;
   position: number | null;
   created_at: string;
   updated_at: string;

@@ -10,6 +10,7 @@ interface TodoItemProps {
   onDelete: (id: number) => void;
   onPriorityChange?: (id: number, priority: 'low' | 'medium' | 'high') => void;
   onTitleChange?: (id: number, title: string) => void;
+  onNotesChange?: (id: number, notes: string) => void;
   allTags: Tag[];
   onAddTag: (todoId: number, tag: Tag) => void;
   onCreateAndAddTag: (todoId: number, name: string) => void;
@@ -55,18 +56,31 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 };
 
-export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, allTags, onAddTag, onCreateAndAddTag, onRemoveTag, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, onTitleChange, onNotesChange, allTags, onAddTag, onCreateAndAddTag, onRemoveTag, isNew, onAnimationEnd, dragHandleProps }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [editNotes, setEditNotes] = useState(todo.notes || '');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const notesTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (editing && editInputRef.current) {
       editInputRef.current.focus();
     }
   }, [editing]);
+
+  useEffect(() => {
+    if (notesExpanded && notesTextareaRef.current) {
+      notesTextareaRef.current.focus();
+    }
+  }, [notesExpanded]);
+
+  useEffect(() => {
+    setEditNotes(todo.notes || '');
+  }, [todo.notes]);
 
   const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
   const priority = todo.priority || 'medium';
@@ -98,6 +112,23 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
       setEditing(false);
     }
   }
+
+  function handleNotesSave() {
+    const trimmed = editNotes.trim();
+    const currentNotes = (todo.notes || '').trim();
+    if (trimmed !== currentNotes && onNotesChange) {
+      onNotesChange(todo.id, trimmed);
+    }
+    if (!trimmed) {
+      setNotesExpanded(false);
+    }
+  }
+
+  function handleNotesToggle() {
+    setNotesExpanded(!notesExpanded);
+  }
+
+  const hasNotes = !!(todo.notes && todo.notes.trim());
 
   return (
     <>
@@ -167,6 +198,31 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
                 {dueDateStatus === 'future' && `Due: ${formatDueDate(todo.due_date)}`}
               </span>
             )}
+            {hasNotes && (
+              <button
+                type="button"
+                className={`notes-indicator${notesExpanded ? ' notes-indicator--active' : ''}`}
+                onClick={handleNotesToggle}
+                aria-label="Toggle notes"
+                data-testid="notes-indicator"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+              </button>
+            )}
+            <button
+              type="button"
+              className={`notes-toggle${notesExpanded ? ' notes-toggle--expanded' : ''}`}
+              onClick={handleNotesToggle}
+              aria-label="Toggle notes"
+            >
+              <span className="notes-toggle-arrow" aria-hidden="true">▸</span>
+              Notes
+            </button>
             <button
               className={`subtask-toggle${expanded ? ' subtask-toggle--expanded' : ''}`}
               onClick={() => setExpanded(!expanded)}
@@ -203,6 +259,20 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
             onRemoveTag={(tagId) => onRemoveTag(todo.id, tagId)}
           />
         </div>
+        {notesExpanded && (
+          <div className="notes-section">
+            <textarea
+              ref={notesTextareaRef}
+              className="notes-textarea"
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              onBlur={handleNotesSave}
+              placeholder="Add notes..."
+              aria-label="Todo notes"
+              rows={3}
+            />
+          </div>
+        )}
         {expanded && (
           <div className="subtask-section">
             <SubtaskList todoId={todo.id} />
