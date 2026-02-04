@@ -84,8 +84,8 @@ export default function SubtaskList({ todoId }: SubtaskListProps) {
               </span>
               <span className={subtask.completed ? 'completed' : ''}>{subtask.title}</span>
             </label>
-            <button className="subtask-delete-btn" onClick={() => handleDelete(subtask.id)} aria-label="Delete subtask">
-              Delete
+            <button className="delete-btn subtask-delete-btn" onClick={() => handleDelete(subtask.id)} aria-label="Delete subtask">
+              <span className="delete-btn-icon" aria-hidden="true">🗑</span>
             </button>
           </li>
         ))}

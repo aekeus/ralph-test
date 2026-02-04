@@ -54,17 +54,28 @@ describe('TodoItem', () => {
     expect(onToggle).toHaveBeenCalledWith(baseTodo);
   });
 
-  it('shows confirmation when delete button is clicked', async () => {
+  it('renders delete button as icon-only with trash icon', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
+    expect(deleteBtn).toHaveClass('delete-btn');
+    const icon = deleteBtn.querySelector('.delete-btn-icon');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('shows modal overlay when delete button is clicked', async () => {
     const onDelete = vi.fn();
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     expect(screen.getByText('Delete this todo and its subtasks?')).toBeInTheDocument();
+    expect(document.querySelector('.delete-modal-overlay')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /confirm deletion/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel delete/i })).toBeInTheDocument();
     expect(onDelete).not.toHaveBeenCalled();
   });
 
-  it('calls onDelete when confirm delete is clicked', async () => {
+  it('calls onDelete when confirm delete is clicked in modal', async () => {
     const onDelete = vi.fn();
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
@@ -72,14 +83,24 @@ describe('TodoItem', () => {
     expect(onDelete).toHaveBeenCalledWith(1);
   });
 
-  it('cancels delete when cancel button is clicked', async () => {
+  it('closes modal when cancel button is clicked', async () => {
     const onDelete = vi.fn();
     render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
     await userEvent.click(screen.getByRole('button', { name: /cancel delete/i }));
     expect(onDelete).not.toHaveBeenCalled();
     expect(screen.queryByText('Delete this todo and its subtasks?')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
+    expect(document.querySelector('.delete-modal-overlay')).not.toBeInTheDocument();
+  });
+
+  it('closes modal when clicking the overlay backdrop', async () => {
+    const onDelete = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={onDelete} />);
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    const overlay = document.querySelector('.delete-modal-overlay')!;
+    await userEvent.click(overlay);
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(document.querySelector('.delete-modal-overlay')).not.toBeInTheDocument();
   });
 
   it('toggles subtask list visibility when subtasks button is clicked', async () => {
@@ -258,5 +279,30 @@ describe('Subtask section CSS styles', () => {
 
   it('visually hides the native subtask checkbox', () => {
     expect(appCss).toMatch(/\.subtask-checkbox\s*\{[^}]*opacity:\s*0/);
+  });
+});
+
+describe('Delete button CSS styles', () => {
+  it('styles delete button as circular with transparent background', () => {
+    expect(appCss).toMatch(/\.delete-btn\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+    expect(appCss).toMatch(/\.delete-btn\s*\{[^}]*background-color:\s*transparent/);
+  });
+
+  it('applies red hover state to delete button', () => {
+    expect(appCss).toMatch(/\.delete-btn:hover\s*\{[^}]*color:\s*var\(--color-danger-500\)/);
+  });
+
+  it('styles modal overlay with fixed positioning and blur backdrop', () => {
+    expect(appCss).toMatch(/\.delete-modal-overlay\s*\{[^}]*position:\s*fixed/);
+    expect(appCss).toMatch(/\.delete-modal-overlay\s*\{[^}]*backdrop-filter:\s*blur\(4px\)/);
+  });
+
+  it('styles modal with rounded corners and surface background', () => {
+    expect(appCss).toMatch(/\.delete-modal\s*\{[^}]*border-radius:\s*var\(--radius-lg\)/);
+    expect(appCss).toMatch(/\.delete-modal\s*\{[^}]*background-color:\s*var\(--color-surface\)/);
+  });
+
+  it('styles confirm button with danger color', () => {
+    expect(appCss).toMatch(/\.delete-modal-confirm\s*\{[^}]*background-color:\s*var\(--color-danger-500\)/);
   });
 });

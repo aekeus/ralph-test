@@ -329,9 +329,46 @@
               text-decoration-color var(--transition-normal);
 }
 
+/* ===== Icon-Only Delete Button ===== */
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger-500);
+  transform: scale(1.1);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+.delete-btn-icon {
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
 .subtask-delete-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.subtask-delete-btn .delete-btn-icon {
   font-size: var(--font-size-xs);
-  padding: var(--space-xs) var(--space-sm);
 }
 
 /* ===== Add Subtask Form ===== */
@@ -362,11 +399,84 @@
   font-size: var(--font-size-sm);
 }
 
-.confirm-delete {
+/* ===== Delete Confirmation Modal ===== */
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.delete-modal {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-md);
+  max-width: 360px;
+  width: 90%;
+}
+
+.delete-modal-message {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.delete-modal-actions {
+  display: flex;
   gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.delete-modal-cancel {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+.delete-modal-cancel:hover {
+  background-color: var(--color-gray-100);
+  color: var(--color-text);
+}
+
+.delete-modal-confirm {
+  background-color: var(--color-danger-500);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.delete-modal-confirm:hover {
+  background-color: var(--color-danger-600);
+}
+
+.delete-modal-confirm:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-color-scheme: dark) {
+  .delete-modal-cancel:hover {
+    background-color: var(--color-gray-700);
+  }
 }
 
 .export-buttons {
