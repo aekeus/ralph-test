@@ -54,6 +54,13 @@ describe('export route file', () => {
     );
   });
 
+  it('CSV handler includes due_date and priority in query', () => {
+    assert.ok(
+      content.includes('due_date') && content.includes('priority'),
+      'CSV handler should select due_date and priority fields'
+    );
+  });
+
   it('CSV handler sets Content-Type to text/csv', () => {
     assert.ok(
       content.includes("'text/csv'"),

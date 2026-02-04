@@ -26,6 +26,8 @@ router.get('/csv', async (_req: Request, res: Response) => {
         t.id AS todo_id,
         t.title AS todo_title,
         t.completed AS todo_completed,
+        t.due_date AS todo_due_date,
+        t.priority AS todo_priority,
         s.id AS subtask_id,
         s.title AS subtask_title,
         s.completed AS subtask_completed
@@ -34,7 +36,7 @@ router.get('/csv', async (_req: Request, res: Response) => {
       ORDER BY t.id ASC, s.id ASC`
     );
 
-    const header = 'todo_id,todo_title,todo_completed,subtask_id,subtask_title,subtask_completed';
+    const header = 'todo_id,todo_title,todo_completed,todo_due_date,todo_priority,subtask_id,subtask_title,subtask_completed';
     const rows = result.rows.map((row) => {
       const todoTitle = `"${String(row.todo_title).replace(/"/g, '""')}"`;
       const subtaskTitle = row.subtask_id != null
@@ -44,6 +46,8 @@ router.get('/csv', async (_req: Request, res: Response) => {
         row.todo_id,
         todoTitle,
         row.todo_completed,
+        row.todo_due_date ?? '',
+        row.todo_priority ?? '',
         row.subtask_id ?? '',
         subtaskTitle,
         row.subtask_completed ?? '',
