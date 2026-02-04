@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import type { Todo, Tag } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, reorderTodos, exportJsonUrl, exportCsvUrl, fetchTags, createTag, addTagToTodo, removeTagFromTodo } from '../api';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, updateTodoNotes, reorderTodos, exportJsonUrl, exportCsvUrl, fetchTags, createTag, addTagToTodo, removeTagFromTodo } from '../api';
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
@@ -132,6 +132,16 @@ export default function TodoList() {
       setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     } catch {
       setError('Failed to update title');
+    }
+  }
+
+  async function handleNotesChange(id: number, notes: string) {
+    try {
+      setError(null);
+      const updated = await updateTodoNotes(id, notes);
+      setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch {
+      setError('Failed to update notes');
     }
   }
 
@@ -414,6 +424,7 @@ export default function TodoList() {
                           onDelete={handleDelete}
                           onPriorityChange={handlePriorityChange}
                           onTitleChange={handleTitleChange}
+                          onNotesChange={handleNotesChange}
                           allTags={allTags}
                           onAddTag={handleAddTag}
                           onCreateAndAddTag={handleCreateAndAddTag}

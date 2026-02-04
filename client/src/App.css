@@ -751,6 +751,115 @@
     color: #60a5fa;
   }
 
+/* ===== Notes Indicator ===== */
+.notes-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-500);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.notes-indicator:hover {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  transform: scale(1.1);
+}
+
+.notes-indicator--active {
+  background-color: var(--color-primary-500);
+  color: var(--color-white);
+}
+
+.notes-indicator--active:hover {
+  background-color: var(--color-primary-600);
+  color: var(--color-white);
+}
+
+[data-theme="dark"] .notes-indicator {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary-300);
+}
+
+[data-theme="dark"] .notes-indicator:hover {
+  background-color: rgba(99, 102, 241, 0.25);
+  color: var(--color-primary-200);
+}
+
+[data-theme="dark"] .notes-indicator--active {
+  background-color: var(--color-primary-500);
+  color: var(--color-white);
+}
+
+/* ===== Notes Toggle Button ===== */
+.notes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.notes-toggle-arrow {
+  display: inline-block;
+  transition: transform var(--transition-normal);
+}
+
+.notes-toggle--expanded .notes-toggle-arrow {
+  transform: rotate(90deg);
+}
+
+/* ===== Notes Section ===== */
+.notes-section {
+  margin-top: var(--space-sm);
+  padding-left: var(--space-md);
+  border-left: 3px solid var(--color-gray-300);
+  margin-left: var(--space-sm);
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: var(--space-sm);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.notes-textarea:focus {
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px var(--color-primary-200);
+}
+
+.notes-textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .notes-section {
+  border-left-color: var(--color-gray-600);
+}
+
+[data-theme="dark"] .notes-textarea {
+  background-color: var(--color-gray-700);
+  border-color: var(--color-gray-600);
+}
+
+[data-theme="dark"] .notes-textarea:focus {
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
 /* ===== Subtask Toggle Button ===== */
 .subtask-toggle {
   display: inline-flex;

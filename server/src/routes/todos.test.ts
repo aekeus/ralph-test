@@ -319,8 +319,8 @@ describe('PUT /api/todos/:id', () => {
 
     expect(res.status).toBe(200);
     expect(mockQuery).toHaveBeenLastCalledWith(
-      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
-      ['New title', false, undefined, undefined, '1']
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      ['New title', false, undefined, undefined, undefined, '1']
     );
   });
 
@@ -335,8 +335,44 @@ describe('PUT /api/todos/:id', () => {
 
     expect(res.status).toBe(200);
     expect(mockQuery).toHaveBeenLastCalledWith(
-      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
-      ['Old title', true, undefined, undefined, '1']
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      ['Old title', true, undefined, undefined, undefined, '1']
+    );
+  });
+
+  it('allows partial update with only notes', async () => {
+    const updatedTodo = { ...existingTodo, notes: 'Some notes here' };
+    mockQuery
+      .mockResolvedValueOnce({ rows: [existingTodo] })
+      .mockResolvedValueOnce({ rows: [updatedTodo] });
+
+    const res = await request(app)
+      .put('/api/todos/1')
+      .send({ notes: 'Some notes here' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(updatedTodo);
+    expect(mockQuery).toHaveBeenLastCalledWith(
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      ['Old title', false, undefined, undefined, 'Some notes here', '1']
+    );
+  });
+
+  it('clears notes when empty string is sent', async () => {
+    const existingWithNotes = { ...existingTodo, notes: 'Old notes' };
+    const updatedTodo = { ...existingTodo, notes: null };
+    mockQuery
+      .mockResolvedValueOnce({ rows: [existingWithNotes] })
+      .mockResolvedValueOnce({ rows: [updatedTodo] });
+
+    const res = await request(app)
+      .put('/api/todos/1')
+      .send({ notes: '' });
+
+    expect(res.status).toBe(200);
+    expect(mockQuery).toHaveBeenLastCalledWith(
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, priority = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      ['Old title', false, undefined, undefined, null, '1']
     );
   });
 

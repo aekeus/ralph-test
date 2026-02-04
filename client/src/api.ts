@@ -33,6 +33,11 @@ export async function updateTodoTitle(id: number, title: string): Promise<Todo> 
   return data;
 }
 
+export async function updateTodoNotes(id: number, notes: string): Promise<Todo> {
+  const { data } = await api.put<Todo>(`/${id}`, { notes: notes || null });
+  return data;
+}
+
 export async function toggleTodo(todo: Todo): Promise<Todo> {
   const { data } = await api.put<Todo>(`/${todo.id}`, {
     completed: !todo.completed,
