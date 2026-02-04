@@ -565,6 +565,43 @@ describe('TodoList', () => {
     });
   });
 
+  it('renders Overdue status filter chip', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const overdueBtn = screen.getByRole('button', { name: 'Overdue' });
+    expect(overdueBtn).toBeInTheDocument();
+    expect(overdueBtn).toHaveClass('filter-chip');
+    expect(overdueBtn).not.toHaveClass('filter-chip--active');
+  });
+
+  it('calls fetchTodos with status=overdue when clicking Overdue chip', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    const overdueBtn = screen.getByRole('button', { name: 'Overdue' });
+    await userEvent.click(overdueBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ status: 'overdue' });
+    });
+
+    expect(overdueBtn).toHaveClass('filter-chip--active');
+  });
+
   it('combines status and priority filters', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);

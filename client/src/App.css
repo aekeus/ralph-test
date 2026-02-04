@@ -652,6 +652,11 @@
   color: #991b1b;
 }
 
+.due-date-badge--soon {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
 [data-theme="dark"] .due-date-badge--future {
     background-color: var(--color-gray-700);
     color: var(--color-gray-300);
@@ -665,6 +670,11 @@
   [data-theme="dark"] .due-date-badge--overdue {
     background-color: rgba(239, 68, 68, 0.15);
     color: #f87171;
+  }
+
+  [data-theme="dark"] .due-date-badge--soon {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
   }
 
 /* ===== Subtask Toggle Button ===== */
