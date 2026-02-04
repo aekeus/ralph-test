@@ -30,8 +30,13 @@ export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
         </label>
         <div className="todo-item-actions">
-          <button onClick={() => setExpanded(!expanded)} aria-label="Toggle subtasks">
-            {expanded ? '▾' : '▸'} Subtasks
+          <button
+            className={`subtask-toggle${expanded ? ' subtask-toggle--expanded' : ''}`}
+            onClick={() => setExpanded(!expanded)}
+            aria-label="Toggle subtasks"
+          >
+            <span className="subtask-toggle-arrow" aria-hidden="true">▸</span>
+            Subtasks
           </button>
           {confirmingDelete ? (
             <span className="confirm-delete">
@@ -50,7 +55,11 @@ export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           )}
         </div>
       </div>
-      {expanded && <SubtaskList todoId={todo.id} />}
+      {expanded && (
+        <div className="subtask-section">
+          <SubtaskList todoId={todo.id} />
+        </div>
+      )}
     </li>
   );
 }

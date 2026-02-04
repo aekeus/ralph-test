@@ -95,6 +95,37 @@ describe('TodoItem', () => {
     expect(screen.queryByPlaceholderText('Add a subtask...')).not.toBeInTheDocument();
   });
 
+  it('applies expanded class to toggle button when subtasks are visible', async () => {
+    vi.mocked(api.fetchSubtasks).mockResolvedValue([]);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+
+    const toggleBtn = screen.getByRole('button', { name: /toggle subtasks/i });
+    expect(toggleBtn).not.toHaveClass('subtask-toggle--expanded');
+
+    await userEvent.click(toggleBtn);
+    expect(toggleBtn).toHaveClass('subtask-toggle--expanded');
+
+    await userEvent.click(toggleBtn);
+    expect(toggleBtn).not.toHaveClass('subtask-toggle--expanded');
+  });
+
+  it('renders subtask section with accent border wrapper when expanded', async () => {
+    vi.mocked(api.fetchSubtasks).mockResolvedValue([]);
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+
+    expect(document.querySelector('.subtask-section')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /toggle subtasks/i }));
+    expect(document.querySelector('.subtask-section')).toBeInTheDocument();
+  });
+
+  it('renders a toggle arrow span inside the subtasks button', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const arrow = document.querySelector('.subtask-toggle-arrow');
+    expect(arrow).toBeInTheDocument();
+    expect(arrow).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('adds todo-item--completed class when todo is completed', () => {
     const completed = { ...baseTodo, completed: true };
     render(<TodoItem todo={completed} onToggle={vi.fn()} onDelete={vi.fn()} />);
@@ -183,5 +214,49 @@ describe('TodoItem CSS styles', () => {
 
   it('reduces opacity on completed text', () => {
     expect(appCss).toMatch(/\.todo-item .completed\s*\{[^}]*opacity:\s*0\.6/);
+  });
+});
+
+describe('Subtask section CSS styles', () => {
+  it('styles subtask-section with a left border accent line', () => {
+    expect(appCss).toMatch(/\.subtask-section\s*\{[^}]*border-left:\s*3px solid var\(--color-primary-300\)/);
+  });
+
+  it('indents subtask-section with padding-left', () => {
+    expect(appCss).toMatch(/\.subtask-section\s*\{[^}]*padding-left:\s*var\(--space-md\)/);
+  });
+
+  it('applies rotation transition on subtask toggle arrow', () => {
+    expect(appCss).toMatch(/\.subtask-toggle-arrow\s*\{[^}]*transition:\s*transform var\(--transition-normal\)/);
+  });
+
+  it('rotates the arrow 90deg when expanded', () => {
+    expect(appCss).toMatch(/\.subtask-toggle--expanded\s+\.subtask-toggle-arrow\s*\{[^}]*transform:\s*rotate\(90deg\)/);
+  });
+
+  it('styles subtask items as cards with border and shadow', () => {
+    expect(appCss).toMatch(/\.subtask-item\s*\{[^}]*box-shadow:\s*var\(--shadow-sm\)/);
+    expect(appCss).toMatch(/\.subtask-item\s*\{[^}]*border:\s*1px solid var\(--color-border\)/);
+    expect(appCss).toMatch(/\.subtask-item\s*\{[^}]*border-radius:\s*var\(--radius-md\)/);
+  });
+
+  it('uses smaller font size for subtask items', () => {
+    expect(appCss).toMatch(/\.subtask-item\s*\{[^}]*font-size:\s*var\(--font-size-sm\)/);
+  });
+
+  it('has hover state for subtask items', () => {
+    expect(appCss).toMatch(/\.subtask-item:hover\s*\{[^}]*box-shadow:\s*var\(--shadow-md\)/);
+  });
+
+  it('reduces opacity for completed subtask items', () => {
+    expect(appCss).toMatch(/\.subtask-item--completed\s*\{[^}]*opacity:\s*0\.7/);
+  });
+
+  it('styles subtask custom checkbox as circular', () => {
+    expect(appCss).toMatch(/\.subtask-checkbox-custom\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+  });
+
+  it('visually hides the native subtask checkbox', () => {
+    expect(appCss).toMatch(/\.subtask-checkbox\s*\{[^}]*opacity:\s*0/);
   });
 });

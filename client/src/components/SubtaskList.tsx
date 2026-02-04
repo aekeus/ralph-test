@@ -69,16 +69,22 @@ export default function SubtaskList({ todoId }: SubtaskListProps) {
       {error && <p className="error">{error}</p>}
       <ul>
         {subtasks.map((subtask) => (
-          <li key={subtask.id} className="subtask-item">
-            <label>
+          <li key={subtask.id} className={`subtask-item${subtask.completed ? ' subtask-item--completed' : ''}`}>
+            <label className="subtask-item-label">
               <input
                 type="checkbox"
+                className="subtask-checkbox"
                 checked={subtask.completed}
                 onChange={() => handleToggle(subtask)}
               />
+              <span className="subtask-checkbox-custom" aria-hidden="true">
+                <svg viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               <span className={subtask.completed ? 'completed' : ''}>{subtask.title}</span>
             </label>
-            <button onClick={() => handleDelete(subtask.id)} aria-label="Delete subtask">
+            <button className="subtask-delete-btn" onClick={() => handleDelete(subtask.id)} aria-label="Delete subtask">
               Delete
             </button>
           </li>

@@ -68,6 +68,28 @@ describe('SubtaskList', () => {
     expect(checkboxes[1]).toBeChecked();
   });
 
+  it('applies subtask-item--completed class to completed subtask item', async () => {
+    vi.mocked(api.fetchSubtasks).mockResolvedValue(mockSubtasks);
+    render(<SubtaskList todoId={10} />);
+    await waitFor(() => {
+      expect(screen.getByText('Second subtask')).toBeInTheDocument();
+    });
+    const items = document.querySelectorAll('.subtask-item');
+    expect(items[0]).not.toHaveClass('subtask-item--completed');
+    expect(items[1]).toHaveClass('subtask-item--completed');
+  });
+
+  it('renders custom checkbox visual elements', async () => {
+    vi.mocked(api.fetchSubtasks).mockResolvedValue(mockSubtasks);
+    render(<SubtaskList todoId={10} />);
+    await waitFor(() => {
+      expect(screen.getByText('First subtask')).toBeInTheDocument();
+    });
+    const customCheckboxes = document.querySelectorAll('.subtask-checkbox-custom');
+    expect(customCheckboxes).toHaveLength(2);
+    expect(customCheckboxes[0]).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('applies completed class to completed subtask', async () => {
     vi.mocked(api.fetchSubtasks).mockResolvedValue(mockSubtasks);
     render(<SubtaskList todoId={10} />);

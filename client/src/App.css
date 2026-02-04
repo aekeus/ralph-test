@@ -86,8 +86,7 @@
 /* ===== Todo Item Card ===== */
 .todo-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: var(--space-md);
   margin-bottom: var(--space-sm);
   background-color: var(--color-surface);
@@ -206,25 +205,136 @@
   gap: var(--space-sm);
 }
 
-.subtask-list {
-  padding-left: var(--space-lg);
-  margin-top: var(--space-sm);
+/* ===== Subtask Toggle Button ===== */
+.subtask-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
+.subtask-toggle-arrow {
+  display: inline-block;
+  transition: transform var(--transition-normal);
+}
+
+.subtask-toggle--expanded .subtask-toggle-arrow {
+  transform: rotate(90deg);
+}
+
+/* ===== Subtask Section Container ===== */
+.subtask-section {
+  margin-top: var(--space-sm);
+  padding-left: var(--space-md);
+  border-left: 3px solid var(--color-primary-300);
+  margin-left: var(--space-sm);
+}
+
+/* ===== Subtask List ===== */
+.subtask-list {
+  padding: var(--space-xs) 0;
+}
+
+/* ===== Subtask Item Card ===== */
 .subtask-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-xs);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  transition: box-shadow var(--transition-normal),
+              transform var(--transition-normal),
+              opacity var(--transition-normal);
 }
 
-.subtask-item label {
+.subtask-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.subtask-item--completed {
+  opacity: 0.7;
+}
+
+/* ===== Subtask Custom Checkbox ===== */
+.subtask-item-label {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   cursor: pointer;
 }
 
+.subtask-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.subtask-checkbox-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-gray-300);
+  background-color: transparent;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.subtask-checkbox-custom svg {
+  width: 10px;
+  height: 10px;
+  color: var(--color-white);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.subtask-checkbox:checked + .subtask-checkbox-custom {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  animation: checkbox-pop 300ms ease;
+}
+
+.subtask-checkbox:checked + .subtask-checkbox-custom svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.subtask-checkbox:focus-visible + .subtask-checkbox-custom {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.subtask-item-label:hover .subtask-checkbox-custom {
+  border-color: var(--color-primary-400);
+}
+
+.subtask-item .completed {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-gray-400);
+  opacity: 0.6;
+  transition: opacity var(--transition-normal),
+              text-decoration-color var(--transition-normal);
+}
+
+.subtask-delete-btn {
+  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+/* ===== Add Subtask Form ===== */
 .add-subtask {
   display: flex;
   gap: var(--space-sm);
