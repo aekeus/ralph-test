@@ -23,27 +23,64 @@
 .add-todo {
   display: flex;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xs);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.add-todo:focus-within {
+  box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.1), 0 3px 6px -3px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .add-todo input {
   flex: 1;
-  padding: var(--space-sm);
-  font-size: var(--font-size-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-}
-
-.add-todo input:focus {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: -1px;
-  border-color: transparent;
-}
-
-.add-todo button {
   padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--color-text);
+  outline: none;
+  min-width: 0;
+}
+
+.add-todo input::placeholder {
+  color: var(--color-text-secondary);
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.add-todo input:focus::placeholder {
+  opacity: 0.5;
+  transform: translateX(4px);
+}
+
+.add-todo .add-todo-btn {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast),
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.add-todo .add-todo-btn:hover {
+  background-color: var(--color-btn-hover);
+  transform: scale(1.03);
+  box-shadow: var(--shadow-sm);
+}
+
+.add-todo .add-todo-btn:active {
+  transform: scale(0.97);
+  box-shadow: none;
 }
 
 .todo-item {

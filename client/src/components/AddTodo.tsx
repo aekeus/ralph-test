@@ -24,7 +24,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Add a new todo..."
       />
-      <button type="submit">Add</button>
+      <button type="submit" className="add-todo-btn">Add</button>
     </form>
   );
 }

@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import AddTodo from './AddTodo';
+
+const appCss = readFileSync(resolve(__dirname, '..', 'App.css'), 'utf-8');
 
 describe('AddTodo', () => {
   it('renders an input and submit button', () => {
@@ -40,5 +44,57 @@ describe('AddTodo', () => {
     await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), '   ');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
     expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it('renders the Add button with the add-todo-btn class', () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    const button = screen.getByRole('button', { name: /add/i });
+    expect(button).toHaveClass('add-todo-btn');
+  });
+});
+
+describe('AddTodo CSS styles', () => {
+  it('uses pill-shaped border-radius on the form container', () => {
+    expect(appCss).toMatch(/\.add-todo\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+  });
+
+  it('applies a box-shadow on the form container', () => {
+    expect(appCss).toMatch(/\.add-todo\s*\{[^}]*box-shadow:\s*var\(--shadow-md\)/);
+  });
+
+  it('has a focus-within state with enhanced shadow', () => {
+    expect(appCss).toContain('.add-todo:focus-within');
+  });
+
+  it('removes border from the input field', () => {
+    expect(appCss).toMatch(/\.add-todo input\s*\{[^}]*border:\s*none/);
+  });
+
+  it('animates the placeholder on focus', () => {
+    expect(appCss).toContain('.add-todo input:focus::placeholder');
+  });
+
+  it('applies placeholder transition for animation', () => {
+    expect(appCss).toMatch(/\.add-todo input::placeholder\s*\{[^}]*transition:/);
+  });
+
+  it('styles the Add button with pill shape', () => {
+    expect(appCss).toMatch(/\.add-todo .add-todo-btn\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+  });
+
+  it('includes hover state with scale transform on the Add button', () => {
+    expect(appCss).toMatch(/\.add-todo .add-todo-btn:hover\s*\{[^}]*transform:\s*scale/);
+  });
+
+  it('includes active state with scale-down on the Add button', () => {
+    expect(appCss).toMatch(/\.add-todo .add-todo-btn:active\s*\{[^}]*transform:\s*scale\(0\.97\)/);
+  });
+
+  it('uses smooth transitions on the form container', () => {
+    expect(appCss).toMatch(/\.add-todo\s*\{[^}]*transition:/);
+  });
+
+  it('uses smooth transitions on the Add button', () => {
+    expect(appCss).toMatch(/\.add-todo .add-todo-btn\s*\{[^}]*transition:/);
   });
 });
