@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import todosRouter from './routes/todos';
+import subtasksRouter from './routes/subtasks';
 
 const app = express();
 
@@ -12,5 +13,6 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/todos', todosRouter);
+app.use('/api/todos/:todoId/subtasks', subtasksRouter);
 
 export default app;
