@@ -9,6 +9,7 @@ export interface FetchTodosParams {
   search?: string;
   status?: 'active' | 'completed';
   priority?: 'high' | 'medium' | 'low';
+  sort?: 'newest' | 'due_date' | 'priority';
 }
 
 export async function fetchTodos(params?: FetchTodosParams): Promise<Todo[]> {

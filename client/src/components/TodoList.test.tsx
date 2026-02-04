@@ -674,6 +674,128 @@ describe('TodoList', () => {
     expect(shortcutsBtn).toHaveClass('btn-shortcuts');
   });
 
+  // ===== Sort Control Tests =====
+
+  it('renders sort control chips with Newest active by default', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Sort:')).toBeInTheDocument();
+    const newestBtn = screen.getByRole('button', { name: 'Newest' });
+    const dueDateBtn = screen.getByRole('button', { name: 'Due Date' });
+    const priorityBtn = screen.getByRole('button', { name: 'Priority' });
+
+    expect(newestBtn).toHaveClass('filter-chip', 'filter-chip--active');
+    expect(dueDateBtn).toHaveClass('filter-chip');
+    expect(dueDateBtn).not.toHaveClass('filter-chip--active');
+    expect(priorityBtn).toHaveClass('filter-chip');
+    expect(priorityBtn).not.toHaveClass('filter-chip--active');
+  });
+
+  it('calls fetchTodos with sort=due_date when Due Date chip is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+
+    const dueDateBtn = screen.getByRole('button', { name: 'Due Date' });
+    await userEvent.click(dueDateBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ sort: 'due_date' });
+    });
+
+    expect(dueDateBtn).toHaveClass('filter-chip--active');
+  });
+
+  it('calls fetchTodos with sort=priority when Priority sort chip is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+
+    const sortGroup = screen.getByText('Sort:').closest('.filter-group')!;
+    const priorityBtn = sortGroup.querySelector('button:last-child') as HTMLElement;
+    await userEvent.click(priorityBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ sort: 'priority' });
+    });
+
+    expect(priorityBtn).toHaveClass('filter-chip--active');
+  });
+
+  it('does not send sort param when Newest is selected (default)', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Click Due Date first
+    const dueDateBtn = screen.getByRole('button', { name: 'Due Date' });
+    await userEvent.click(dueDateBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+
+    // Click Newest
+    const newestBtn = screen.getByRole('button', { name: 'Newest' });
+    await userEvent.click(newestBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({});
+    });
+  });
+
+  it('combines sort with filters', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Click Active status filter
+    const activeBtn = screen.getByRole('button', { name: 'Active' });
+    await userEvent.click(activeBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    // Click Priority sort
+    const sortGroup = screen.getByText('Sort:').closest('.filter-group')!;
+    const prioritySortBtn = sortGroup.querySelector('button:last-child') as HTMLElement;
+    await userEvent.click(prioritySortBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ status: 'active', sort: 'priority' });
+    });
+  });
+
   it('opens shortcuts modal when keyboard button is clicked', async () => {
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
       this.setAttribute('open', '');

@@ -20,6 +20,7 @@ export default function TodoList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'due_date' | 'priority'>('newest');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toasts, setToasts] = useState<(ToastItem & { todo: Todo })[]>([]);
   const toastIdCounter = useRef(0);
@@ -45,8 +46,9 @@ export default function TodoList() {
     if (searchQuery.trim()) params.search = searchQuery.trim();
     if (statusFilter !== 'all') params.status = statusFilter;
     if (priorityFilter !== 'all') params.priority = priorityFilter;
+    if (sortOrder !== 'newest') params.sort = sortOrder;
     return params;
-  }, [searchQuery, statusFilter, priorityFilter]);
+  }, [searchQuery, statusFilter, priorityFilter, sortOrder]);
 
   useEffect(() => {
     loadTodos();
@@ -60,7 +62,7 @@ export default function TodoList() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchQuery, statusFilter, priorityFilter, loadTodos, buildParams]);
+  }, [searchQuery, statusFilter, priorityFilter, sortOrder, loadTodos, buildParams]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -203,7 +205,7 @@ export default function TodoList() {
     setSearchQuery(e.target.value);
   }
 
-  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all' || sortOrder !== 'newest';
 
   if (loading && todos.length === 0 && !hasActiveFilters) return <p>Loading todos...</p>;
 
@@ -281,6 +283,23 @@ export default function TodoList() {
               onClick={() => setPriorityFilter(priority)}
             >
               {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="filter-group">
+          <span className="filter-label">Sort:</span>
+          {([
+            { value: 'newest', label: 'Newest' },
+            { value: 'due_date', label: 'Due Date' },
+            { value: 'priority', label: 'Priority' },
+          ] as const).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`filter-chip ${sortOrder === option.value ? 'filter-chip--active' : ''}`}
+              onClick={() => setSortOrder(option.value)}
+            >
+              {option.label}
             </button>
           ))}
         </div>
