@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import type { Todo, Tag } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, updateTodoNotes, reorderTodos, exportJsonUrl, exportCsvUrl, fetchTags, createTag, addTagToTodo, removeTagFromTodo } from '../api';
+import type { Todo, Tag, TodoStats } from '../types';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, updateTodoTitle, updateTodoNotes, reorderTodos, exportJsonUrl, exportCsvUrl, fetchTags, createTag, addTagToTodo, removeTagFromTodo, fetchTodoStats } from '../api';
 import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
+import StatsBar from './StatsBar';
 import ThemeToggle from './ThemeToggle';
 import Toast from './Toast';
 import type { ToastItem } from './Toast';
@@ -25,6 +26,7 @@ export default function TodoList() {
   const [toasts, setToasts] = useState<(ToastItem & { todo: Todo })[]>([]);
   const toastIdCounter = useRef(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [stats, setStats] = useState<TodoStats>({ total: 0, completed: 0, active: 0, overdue: 0, byPriority: { high: 0, medium: 0, low: 0 } });
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const addTodoInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +40,13 @@ export default function TodoList() {
       setError(null);
       const data = await fetchTodos(params);
       setTodos(data);
+      // Refresh stats whenever todos are loaded
+      try {
+        const statsData = await fetchTodoStats();
+        setStats(statsData);
+      } catch {
+        // silently fail
+      }
     } catch {
       setError('Failed to load todos');
     } finally {
@@ -55,6 +64,15 @@ export default function TodoList() {
     return params;
   }, [searchQuery, statusFilter, priorityFilter, sortOrder, selectedTags]);
 
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await fetchTodoStats();
+      setStats(data);
+    } catch {
+      // silently fail - stats are supplementary
+    }
+  }, []);
+
   const loadAllTags = useCallback(async () => {
     try {
       const tags = await fetchTags();
@@ -67,7 +85,8 @@ export default function TodoList() {
   useEffect(() => {
     loadTodos();
     loadAllTags();
-  }, [loadTodos, loadAllTags]);
+    loadStats();
+  }, [loadTodos, loadAllTags, loadStats]);
 
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -188,6 +207,7 @@ export default function TodoList() {
     // Actually delete from the server
     try {
       await deleteTodo(toast.todoId);
+      loadStats();
     } catch {
       // Restore the todo if the delete fails
       setTodos((prev) => {
@@ -461,6 +481,7 @@ export default function TodoList() {
           </div>
         </div>
       )}
+      <StatsBar stats={stats} />
       <AddTodo ref={addTodoInputRef} onAdd={handleAdd} />
       {todos.length === 0 ? (
         <p>{hasActiveFilters ? 'No todos match your filters.' : 'No todos yet. Add one above!'}</p>

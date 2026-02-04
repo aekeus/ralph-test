@@ -1880,3 +1880,73 @@
   background-color: rgba(34, 197, 94, 0.15);
   color: #4ade80;
 }
+
+/* ===== Stats Bar ===== */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.stats-bar-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.stats-bar-ring svg {
+  display: block;
+}
+
+.stats-ring-bg {
+  stroke: var(--ring-bg, #e0e0e0);
+}
+
+.stats-ring-fill {
+  stroke: var(--accent, #4f8cff);
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.stats-ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.stats-bar-text {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+}
+
+.stats-overdue {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* Dark mode stats bar */
+[data-theme="dark"] .stats-bar {
+  background: var(--bg-secondary, #1e1e2e);
+  border-color: var(--border-color, #333);
+}
+
+[data-theme="dark"] .stats-ring-bg {
+  stroke: #444;
+}
+
+[data-theme="dark"] .stats-ring-text {
+  color: var(--text-primary, #e0e0e0);
+}
+
+[data-theme="dark"] .stats-bar-text {
+  color: var(--text-secondary, #aaa);
+}

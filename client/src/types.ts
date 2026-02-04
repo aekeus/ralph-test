@@ -17,6 +17,18 @@ export interface Todo {
   tags: Tag[];
 }
 
+export interface TodoStats {
+  total: number;
+  completed: number;
+  active: number;
+  overdue: number;
+  byPriority: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
 export interface Subtask {
   id: number;
   todo_id: number;
