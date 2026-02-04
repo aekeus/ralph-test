@@ -592,4 +592,107 @@ describe('TodoList', () => {
       expect(api.fetchTodos).toHaveBeenCalledWith({ status: 'active', priority: 'high' });
     });
   });
+
+  // ===== Keyboard Shortcuts Tests =====
+
+  it('focuses add-todo input when "n" is pressed', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const addInput = screen.getByPlaceholderText('Add a new todo...');
+    expect(addInput).not.toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'n' });
+    expect(addInput).toHaveFocus();
+  });
+
+  it('focuses search input when "/" is pressed', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText('Search todos...');
+    expect(searchInput).not.toHaveFocus();
+
+    fireEvent.keyDown(document, { key: '/' });
+    expect(searchInput).toHaveFocus();
+  });
+
+  it('blurs focused input when Escape is pressed', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText('Search todos...');
+    searchInput.focus();
+    expect(searchInput).toHaveFocus();
+
+    fireEvent.keyDown(searchInput, { key: 'Escape' });
+    expect(searchInput).not.toHaveFocus();
+  });
+
+  it('does not trigger shortcuts when an input is focused', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText('Search todos...');
+    const addInput = screen.getByPlaceholderText('Add a new todo...');
+
+    // Focus search input first
+    searchInput.focus();
+    expect(searchInput).toHaveFocus();
+
+    // Press 'n' while search is focused - should NOT switch focus to add input
+    fireEvent.keyDown(searchInput, { key: 'n' });
+    expect(addInput).not.toHaveFocus();
+  });
+
+  it('renders keyboard shortcuts button in header', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const shortcutsBtn = screen.getByRole('button', { name: /keyboard shortcuts/i });
+    expect(shortcutsBtn).toBeInTheDocument();
+    expect(shortcutsBtn).toHaveClass('btn-shortcuts');
+  });
+
+  it('opens shortcuts modal when keyboard button is clicked', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    });
+    HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+      this.removeAttribute('open');
+    });
+
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const shortcutsBtn = screen.getByRole('button', { name: /keyboard shortcuts/i });
+    await userEvent.click(shortcutsBtn);
+
+    expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument();
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+  });
 });

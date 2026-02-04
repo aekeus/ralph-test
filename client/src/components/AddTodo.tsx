@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import type { FormEvent } from 'react';
 
 type Priority = 'low' | 'medium' | 'high';
@@ -7,7 +7,7 @@ interface AddTodoProps {
   onAdd: (title: string, dueDate?: string, priority?: Priority) => void;
 }
 
-export default function AddTodo({ onAdd }: AddTodoProps) {
+const AddTodo = forwardRef<HTMLInputElement, AddTodoProps>(function AddTodo({ onAdd }, ref) {
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -25,6 +25,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
   return (
     <form className="add-todo" onSubmit={handleSubmit}>
       <input
+        ref={ref}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -66,4 +67,6 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
       <button type="submit" className="add-todo-btn">Add</button>
     </form>
   );
-}
+});
+
+export default AddTodo;

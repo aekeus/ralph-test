@@ -9,6 +9,7 @@ import AddTodo from './AddTodo';
 import ThemeToggle from './ThemeToggle';
 import Toast from './Toast';
 import type { ToastItem } from './Toast';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 
 export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -22,6 +23,9 @@ export default function TodoList() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toasts, setToasts] = useState<(ToastItem & { todo: Todo })[]>([]);
   const toastIdCounter = useRef(0);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const addTodoInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const loadTodos = useCallback(async (params?: FetchTodosParams) => {
     try {
@@ -57,6 +61,32 @@ export default function TodoList() {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [searchQuery, statusFilter, priorityFilter, loadTodos, buildParams]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if (e.key === 'Escape') {
+        if (isInputFocused && target instanceof HTMLElement) {
+          target.blur();
+        }
+        return;
+      }
+
+      if (isInputFocused) return;
+
+      if (e.key === 'n') {
+        e.preventDefault();
+        addTodoInputRef.current?.focus();
+      } else if (e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   async function handleAdd(title: string, dueDate?: string, priority?: 'low' | 'medium' | 'high') {
     try {
@@ -195,6 +225,18 @@ export default function TodoList() {
             </button>
           </a>
           <ThemeToggle />
+          <button
+            type="button"
+            className="btn-shortcuts"
+            onClick={() => setShortcutsOpen(true)}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8" />
+            </svg>
+          </button>
         </div>
       </header>
       {error && <p className="error">{error}</p>}
@@ -206,6 +248,7 @@ export default function TodoList() {
           </svg>
         </span>
         <input
+          ref={searchInputRef}
           type="text"
           placeholder="Search todos..."
           value={searchQuery}
@@ -242,7 +285,7 @@ export default function TodoList() {
           ))}
         </div>
       </div>
-      <AddTodo onAdd={handleAdd} />
+      <AddTodo ref={addTodoInputRef} onAdd={handleAdd} />
       {todos.length === 0 ? (
         <p>{hasActiveFilters ? 'No todos match your filters.' : 'No todos yet. Add one above!'}</p>
       ) : (
@@ -291,6 +334,7 @@ export default function TodoList() {
           ))}
         </div>
       )}
+      <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }
