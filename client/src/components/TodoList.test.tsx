@@ -5,7 +5,20 @@ import TodoList from './TodoList';
 import * as api from '../api';
 import type { Todo } from '../types';
 
-vi.mock('../api');
+vi.mock('../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api')>();
+  return {
+    ...actual,
+    fetchTodos: vi.fn(),
+    addTodo: vi.fn(),
+    toggleTodo: vi.fn(),
+    deleteTodo: vi.fn(),
+    fetchSubtasks: vi.fn(),
+    addSubtask: vi.fn(),
+    toggleSubtask: vi.fn(),
+    deleteSubtask: vi.fn(),
+  };
+});
 
 const mockTodos: Todo[] = [
   {
@@ -142,5 +155,40 @@ describe('TodoList', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed to add todo')).toBeInTheDocument();
     });
+  });
+
+  it('renders Export JSON button with correct link', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const exportJsonBtn = screen.getByRole('button', { name: /export json/i });
+    expect(exportJsonBtn).toBeInTheDocument();
+    const link = exportJsonBtn.closest('a');
+    expect(link).toHaveAttribute('href', '/api/export/json');
+    expect(link).toHaveAttribute('download');
+  });
+
+  it('renders Export CSV button with correct link', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const exportCsvBtn = screen.getByRole('button', { name: /export csv/i });
+    expect(exportCsvBtn).toBeInTheDocument();
+    const link = exportCsvBtn.closest('a');
+    expect(link).toHaveAttribute('href', '/api/export/csv');
+    expect(link).toHaveAttribute('download');
+  });
+
+  it('shows export buttons before loading completes', () => {
+    vi.mocked(api.fetchTodos).mockReturnValue(new Promise(() => {}));
+    render(<TodoList />);
+    // Export buttons should not be visible during loading
+    expect(screen.queryByRole('button', { name: /export json/i })).not.toBeInTheDocument();
   });
 });

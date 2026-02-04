@@ -104,6 +104,12 @@ ul {
   font-size: 0.875rem;
 }
 
+.export-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
 .error {
   color: #d32f2f;
 }

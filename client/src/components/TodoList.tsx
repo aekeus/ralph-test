@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Todo } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo } from '../api';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, exportJsonUrl, exportCsvUrl } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 
@@ -61,6 +61,14 @@ export default function TodoList() {
   return (
     <div className="todo-list">
       <h1>Todos</h1>
+      <div className="export-buttons">
+        <a href={exportJsonUrl()} download>
+          <button type="button">Export JSON</button>
+        </a>
+        <a href={exportCsvUrl()} download>
+          <button type="button">Export CSV</button>
+        </a>
+      </div>
       {error && <p className="error">{error}</p>}
       <AddTodo onAdd={handleAdd} />
       {todos.length === 0 ? (

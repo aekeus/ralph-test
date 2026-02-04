@@ -46,3 +46,11 @@ export async function toggleSubtask(todoId: number, subtask: Subtask): Promise<S
 export async function deleteSubtask(todoId: number, subtaskId: number): Promise<void> {
   await api.delete(`/${todoId}/subtasks/${subtaskId}`);
 }
+
+export function exportJsonUrl(): string {
+  return '/api/export/json';
+}
+
+export function exportCsvUrl(): string {
+  return '/api/export/csv';
+}
