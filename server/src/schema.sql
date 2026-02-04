@@ -3,11 +3,13 @@ CREATE TABLE IF NOT EXISTS todos (
     title VARCHAR(255) NOT NULL,
     completed BOOLEAN DEFAULT false,
     due_date DATE,
+    priority VARCHAR(10) DEFAULT 'medium',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
 ALTER TABLE todos ADD COLUMN IF NOT EXISTS due_date DATE;
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS priority VARCHAR(10) DEFAULT 'medium';
 
 CREATE TABLE IF NOT EXISTS subtasks (
     id SERIAL PRIMARY KEY,

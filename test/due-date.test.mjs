@@ -42,7 +42,7 @@ describe('due_date in todos route', () => {
 
   it('POST handler accepts due_date', () => {
     assert.ok(
-      content.includes('due_date') && content.includes('INSERT INTO todos (title, due_date)'),
+      content.includes('due_date') && content.includes('INSERT INTO todos (title, due_date'),
       'POST handler should accept and insert due_date'
     );
   });
@@ -104,7 +104,7 @@ describe('due_date in server route tests', () => {
 
   it('POST test uses updated INSERT query with due_date', () => {
     assert.ok(
-      content.includes('INSERT INTO todos (title, due_date)'),
+      content.includes('INSERT INTO todos (title, due_date'),
       'POST test should verify the updated INSERT query includes due_date'
     );
   });
