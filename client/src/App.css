@@ -83,24 +83,115 @@
   box-shadow: none;
 }
 
+/* ===== Todo Item Card ===== */
 .todo-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-normal),
+              transform var(--transition-normal),
+              opacity var(--transition-normal);
 }
 
-.todo-item label {
+.todo-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.todo-item--completed {
+  opacity: 0.7;
+}
+
+.todo-item--completed:hover {
+  opacity: 0.85;
+}
+
+/* ===== Custom Circular Checkbox ===== */
+.todo-item-label {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   cursor: pointer;
 }
 
+.todo-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.todo-checkbox-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-gray-300);
+  background-color: transparent;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.todo-checkbox-custom svg {
+  width: 12px;
+  height: 12px;
+  color: var(--color-white);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.todo-checkbox:checked + .todo-checkbox-custom {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  animation: checkbox-pop 300ms ease;
+}
+
+.todo-checkbox:checked + .todo-checkbox-custom svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.todo-checkbox:focus-visible + .todo-checkbox-custom {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.todo-item-label:hover .todo-checkbox-custom {
+  border-color: var(--color-primary-400);
+}
+
+@keyframes checkbox-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ===== Completed Item Strikethrough ===== */
 .todo-item .completed {
   text-decoration: line-through;
+  text-decoration-color: var(--color-gray-400);
   opacity: 0.6;
+  transition: opacity var(--transition-normal),
+              text-decoration-color var(--transition-normal);
 }
 
 .todo-item-header {
