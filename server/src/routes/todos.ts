@@ -36,6 +36,25 @@ router.get('/', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
+    // Tag filtering: ?tag=name or ?tag=name1&tag=name2 (AND logic)
+    const tagNames: string[] = [];
+    if (req.query.tag) {
+      const tags = Array.isArray(req.query.tag) ? req.query.tag : [req.query.tag];
+      for (const t of tags) {
+        if (typeof t === 'string' && t.trim()) {
+          tagNames.push(t.trim());
+        }
+      }
+    }
+
+    if (tagNames.length > 0) {
+      conditions.push(
+        `id IN (SELECT tt.todo_id FROM todo_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tg.name = ANY($${paramIndex}) GROUP BY tt.todo_id HAVING COUNT(DISTINCT tg.name) = $${paramIndex + 1})`
+      );
+      params.push(tagNames, tagNames.length);
+      paramIndex += 2;
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     let orderClause = 'ORDER BY position ASC NULLS LAST, created_at DESC';
