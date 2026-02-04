@@ -4,9 +4,13 @@ import pool from '../db';
 const router = Router();
 
 // GET /api/todos
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM todos ORDER BY created_at DESC');
+    let orderClause = 'ORDER BY created_at DESC';
+    if (req.query.sort === 'due_date') {
+      orderClause = 'ORDER BY due_date ASC NULLS LAST';
+    }
+    const result = await pool.query(`SELECT * FROM todos ${orderClause}`);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch todos' });
@@ -30,13 +34,13 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/todos
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { title } = req.body;
+    const { title, due_date } = req.body;
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return res.status(400).json({ error: 'Title is required' });
     }
     const result = await pool.query(
-      'INSERT INTO todos (title) VALUES ($1) RETURNING *',
-      [title.trim()]
+      'INSERT INTO todos (title, due_date) VALUES ($1, $2) RETURNING *',
+      [title.trim(), due_date || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -48,7 +52,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, completed } = req.body;
+    const { title, completed, due_date } = req.body;
 
     const existing = await pool.query('SELECT * FROM todos WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
@@ -57,10 +61,11 @@ router.put('/:id', async (req: Request, res: Response) => {
 
     const updatedTitle = title !== undefined ? title : existing.rows[0].title;
     const updatedCompleted = completed !== undefined ? completed : existing.rows[0].completed;
+    const updatedDueDate = due_date !== undefined ? (due_date || null) : existing.rows[0].due_date;
 
     const result = await pool.query(
-      'UPDATE todos SET title = $1, completed = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
-      [updatedTitle, updatedCompleted, id]
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, updated_at = NOW() WHERE id = $4 RETURNING *',
+      [updatedTitle, updatedCompleted, updatedDueDate, id]
     );
     res.json(result.rows[0]);
   } catch (err) {

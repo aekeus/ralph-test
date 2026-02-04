@@ -81,8 +81,8 @@ describe('POST /api/todos', () => {
     expect(res.status).toBe(201);
     expect(res.body).toEqual(newTodo);
     expect(mockQuery).toHaveBeenCalledWith(
-      'INSERT INTO todos (title) VALUES ($1) RETURNING *',
-      ['New todo']
+      'INSERT INTO todos (title, due_date) VALUES ($1, $2) RETURNING *',
+      ['New todo', null]
     );
   });
 
@@ -95,8 +95,8 @@ describe('POST /api/todos', () => {
       .send({ title: '  Trimmed  ' });
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'INSERT INTO todos (title) VALUES ($1) RETURNING *',
-      ['Trimmed']
+      'INSERT INTO todos (title, due_date) VALUES ($1, $2) RETURNING *',
+      ['Trimmed', null]
     );
   });
 
@@ -168,8 +168,8 @@ describe('PUT /api/todos/:id', () => {
 
     expect(res.status).toBe(200);
     expect(mockQuery).toHaveBeenLastCalledWith(
-      'UPDATE todos SET title = $1, completed = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
-      ['New title', false, '1']
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, updated_at = NOW() WHERE id = $4 RETURNING *',
+      ['New title', false, undefined, '1']
     );
   });
 
@@ -184,8 +184,8 @@ describe('PUT /api/todos/:id', () => {
 
     expect(res.status).toBe(200);
     expect(mockQuery).toHaveBeenLastCalledWith(
-      'UPDATE todos SET title = $1, completed = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
-      ['Old title', true, '1']
+      'UPDATE todos SET title = $1, completed = $2, due_date = $3, updated_at = NOW() WHERE id = $4 RETURNING *',
+      ['Old title', true, undefined, '1']
     );
   });
 
