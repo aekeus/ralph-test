@@ -13,6 +13,7 @@ vi.mock('../api', async (importOriginal) => {
     addTodo: vi.fn(),
     toggleTodo: vi.fn(),
     deleteTodo: vi.fn(),
+    updateTodoPriority: vi.fn(),
     fetchSubtasks: vi.fn(),
     addSubtask: vi.fn(),
     toggleSubtask: vi.fn(),
@@ -26,6 +27,7 @@ const mockTodos: Todo[] = [
     title: 'First todo',
     completed: false,
     due_date: null,
+    priority: 'medium',
     created_at: '2024-01-02T00:00:00Z',
     updated_at: '2024-01-02T00:00:00Z',
   },
@@ -34,6 +36,7 @@ const mockTodos: Todo[] = [
     title: 'Second todo',
     completed: true,
     due_date: null,
+    priority: 'medium',
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -81,6 +84,7 @@ describe('TodoList', () => {
       title: 'New todo',
       completed: false,
       due_date: null,
+      priority: 'medium',
       created_at: '2024-01-03T00:00:00Z',
       updated_at: '2024-01-03T00:00:00Z',
     };
@@ -98,7 +102,7 @@ describe('TodoList', () => {
     await waitFor(() => {
       expect(screen.getByText('New todo')).toBeInTheDocument();
     });
-    expect(api.addTodo).toHaveBeenCalledWith('New todo', undefined);
+    expect(api.addTodo).toHaveBeenCalledWith('New todo', undefined, 'medium');
   });
 
   it('toggles a todo', async () => {
@@ -149,6 +153,7 @@ describe('TodoList', () => {
       title: 'Animated todo',
       completed: false,
       due_date: null,
+      priority: 'medium',
       created_at: '2024-01-03T00:00:00Z',
       updated_at: '2024-01-03T00:00:00Z',
     };

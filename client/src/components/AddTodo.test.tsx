@@ -19,13 +19,27 @@ describe('AddTodo', () => {
     expect(screen.getByLabelText('Due date')).toBeInTheDocument();
   });
 
+  it('renders priority selector buttons', () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    expect(screen.getByRole('group', { name: /priority/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /high/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /med/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /low/i })).toBeInTheDocument();
+  });
+
+  it('defaults to medium priority', () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    const medBtn = screen.getByRole('button', { name: /med/i });
+    expect(medBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('calls onAdd with trimmed title on submit', async () => {
     const onAdd = vi.fn();
     render(<AddTodo onAdd={onAdd} />);
     const input = screen.getByPlaceholderText('Add a new todo...');
     await userEvent.type(input, '  New todo  ');
-    await userEvent.click(screen.getByRole('button', { name: /add/i }));
-    expect(onAdd).toHaveBeenCalledWith('New todo', undefined);
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+    expect(onAdd).toHaveBeenCalledWith('New todo', undefined, 'medium');
   });
 
   it('clears the input after submit', async () => {
@@ -50,7 +64,7 @@ describe('AddTodo', () => {
     const dateInput = screen.getByLabelText('Due date');
     await userEvent.type(dateInput, '2025-03-15');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
-    expect(onAdd).toHaveBeenCalledWith('Todo with date', '2025-03-15');
+    expect(onAdd).toHaveBeenCalledWith('Todo with date', '2025-03-15', 'medium');
   });
 
   it('clears the date input after submit', async () => {
@@ -72,8 +86,34 @@ describe('AddTodo', () => {
 
   it('renders the Add button with the add-todo-btn class', () => {
     render(<AddTodo onAdd={vi.fn()} />);
-    const button = screen.getByRole('button', { name: /add/i });
+    const button = screen.getByRole('button', { name: /^add$/i });
     expect(button).toHaveClass('add-todo-btn');
+  });
+
+  it('calls onAdd with selected priority', async () => {
+    const onAdd = vi.fn();
+    render(<AddTodo onAdd={onAdd} />);
+    await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'High priority task');
+    await userEvent.click(screen.getByRole('button', { name: /high/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+    expect(onAdd).toHaveBeenCalledWith('High priority task', undefined, 'high');
+  });
+
+  it('resets priority to medium after submit', async () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'Test');
+    await userEvent.click(screen.getByRole('button', { name: /high/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+    const medBtn = screen.getByRole('button', { name: /med/i });
+    expect(medBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('highlights only the selected priority button', async () => {
+    render(<AddTodo onAdd={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: /low/i }));
+    expect(screen.getByRole('button', { name: /low/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /high/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: /med/i })).toHaveAttribute('aria-pressed', 'false');
   });
 });
 

@@ -16,6 +16,7 @@ const baseTodo: Todo = {
   title: 'Test todo',
   completed: false,
   due_date: null,
+  priority: 'medium',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
@@ -396,6 +397,111 @@ describe('Entrance animation CSS styles', () => {
 
   it('applies todo-enter animation to todo-item--enter class', () => {
     expect(appCss).toMatch(/\.todo-item--enter\s*\{[^}]*animation:\s*todo-enter/);
+  });
+});
+
+describe('TodoItem priority indicator', () => {
+  it('renders a priority indicator with the correct priority label', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const indicator = screen.getByTestId('priority-indicator');
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveTextContent('Medium');
+  });
+
+  it('renders high priority indicator with correct class', () => {
+    const highTodo = { ...baseTodo, priority: 'high' as const };
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const indicator = screen.getByTestId('priority-indicator');
+    expect(indicator).toHaveClass('priority-indicator--high');
+    expect(indicator).toHaveTextContent('High');
+  });
+
+  it('renders low priority indicator with correct class', () => {
+    const lowTodo = { ...baseTodo, priority: 'low' as const };
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const indicator = screen.getByTestId('priority-indicator');
+    expect(indicator).toHaveClass('priority-indicator--low');
+    expect(indicator).toHaveTextContent('Low');
+  });
+
+  it('renders a colored dot inside the priority indicator', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const dot = document.querySelector('.priority-dot');
+    expect(dot).toBeInTheDocument();
+    expect(dot).toHaveClass('priority-dot--medium');
+  });
+
+  it('renders red dot for high priority', () => {
+    const highTodo = { ...baseTodo, priority: 'high' as const };
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const dot = document.querySelector('.priority-dot');
+    expect(dot).toHaveClass('priority-dot--high');
+  });
+
+  it('renders green dot for low priority', () => {
+    const lowTodo = { ...baseTodo, priority: 'low' as const };
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const dot = document.querySelector('.priority-dot');
+    expect(dot).toHaveClass('priority-dot--low');
+  });
+
+  it('calls onPriorityChange with next priority when indicator is clicked', async () => {
+    const onPriorityChange = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    await userEvent.click(screen.getByTestId('priority-indicator'));
+    expect(onPriorityChange).toHaveBeenCalledWith(1, 'low');
+  });
+
+  it('cycles priority: high -> medium', async () => {
+    const onPriorityChange = vi.fn();
+    const highTodo = { ...baseTodo, priority: 'high' as const };
+    render(<TodoItem todo={highTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    await userEvent.click(screen.getByTestId('priority-indicator'));
+    expect(onPriorityChange).toHaveBeenCalledWith(1, 'medium');
+  });
+
+  it('cycles priority: low -> high', async () => {
+    const onPriorityChange = vi.fn();
+    const lowTodo = { ...baseTodo, priority: 'low' as const };
+    render(<TodoItem todo={lowTodo} onToggle={vi.fn()} onDelete={vi.fn()} onPriorityChange={onPriorityChange} />);
+    await userEvent.click(screen.getByTestId('priority-indicator'));
+    expect(onPriorityChange).toHaveBeenCalledWith(1, 'high');
+  });
+
+  it('has accessible label on the priority indicator', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const indicator = screen.getByTestId('priority-indicator');
+    expect(indicator).toHaveAttribute('aria-label', 'Priority: Medium. Click to change.');
+  });
+});
+
+describe('Priority indicator CSS styles', () => {
+  it('styles priority-indicator with pill shape', () => {
+    expect(appCss).toMatch(/\.priority-indicator\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+  });
+
+  it('styles high priority indicator with red background', () => {
+    expect(appCss).toMatch(/\.priority-indicator--high\s*\{[^}]*background-color:\s*#fee2e2/);
+  });
+
+  it('styles medium priority indicator with amber background', () => {
+    expect(appCss).toMatch(/\.priority-indicator--medium\s*\{[^}]*background-color:\s*#fef3c7/);
+  });
+
+  it('styles low priority indicator with green background', () => {
+    expect(appCss).toMatch(/\.priority-indicator--low\s*\{[^}]*background-color:\s*#f0fdf4/);
+  });
+
+  it('styles high priority dot with red color', () => {
+    expect(appCss).toMatch(/\.priority-dot--high\s*\{[^}]*background-color:\s*#ef4444/);
+  });
+
+  it('styles medium priority dot with amber color', () => {
+    expect(appCss).toMatch(/\.priority-dot--medium\s*\{[^}]*background-color:\s*#f59e0b/);
+  });
+
+  it('styles low priority dot with green color', () => {
+    expect(appCss).toMatch(/\.priority-dot--low\s*\{[^}]*background-color:\s*#22c55e/);
   });
 });
 

@@ -6,6 +6,7 @@ interface TodoItemProps {
   todo: Todo;
   onToggle: (todo: Todo) => void;
   onDelete: (id: number) => void;
+  onPriorityChange?: (id: number, priority: 'low' | 'medium' | 'high') => void;
   isNew?: boolean;
   onAnimationEnd?: () => void;
 }
@@ -30,11 +31,30 @@ function formatDueDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function TodoItem({ todo, onToggle, onDelete, isNew, onAnimationEnd }: TodoItemProps) {
+const PRIORITY_CYCLE: Record<string, 'low' | 'medium' | 'high'> = {
+  high: 'medium',
+  medium: 'low',
+  low: 'high',
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
+export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, isNew, onAnimationEnd }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
+  const priority = todo.priority || 'medium';
+
+  function handlePriorityClick() {
+    if (onPriorityChange) {
+      onPriorityChange(todo.id, PRIORITY_CYCLE[priority]);
+    }
+  }
 
   return (
     <>
@@ -55,6 +75,16 @@ export default function TodoItem({ todo, onToggle, onDelete, isNew, onAnimationE
             <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
           </label>
           <div className="todo-item-actions">
+            <button
+              type="button"
+              className={`priority-indicator priority-indicator--${priority}`}
+              onClick={handlePriorityClick}
+              aria-label={`Priority: ${PRIORITY_LABELS[priority]}. Click to change.`}
+              data-testid="priority-indicator"
+            >
+              <span className={`priority-dot priority-dot--${priority}`} aria-hidden="true" />
+              {PRIORITY_LABELS[priority]}
+            </button>
             {todo.due_date && dueDateStatus && (
               <span className={`due-date-badge due-date-badge--${dueDateStatus}`} data-testid="due-date-badge">
                 {dueDateStatus === 'overdue' ? 'Overdue' : `Due: ${formatDueDate(todo.due_date)}`}

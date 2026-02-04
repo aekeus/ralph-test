@@ -10,8 +10,13 @@ export async function fetchTodos(): Promise<Todo[]> {
   return data;
 }
 
-export async function addTodo(title: string, dueDate?: string): Promise<Todo> {
-  const { data } = await api.post<Todo>('/', { title, due_date: dueDate ?? null });
+export async function addTodo(title: string, dueDate?: string, priority?: 'low' | 'medium' | 'high'): Promise<Todo> {
+  const { data } = await api.post<Todo>('/', { title, due_date: dueDate ?? null, priority: priority ?? 'medium' });
+  return data;
+}
+
+export async function updateTodoPriority(id: number, priority: 'low' | 'medium' | 'high'): Promise<Todo> {
+  const { data } = await api.put<Todo>(`/${id}`, { priority });
   return data;
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import type { Todo } from '../types';
-import { fetchTodos, addTodo, toggleTodo, deleteTodo, exportJsonUrl, exportCsvUrl } from '../api';
+import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, exportJsonUrl, exportCsvUrl } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 
@@ -27,14 +27,24 @@ export default function TodoList() {
     }
   }
 
-  async function handleAdd(title: string, dueDate?: string) {
+  async function handleAdd(title: string, dueDate?: string, priority?: 'low' | 'medium' | 'high') {
     try {
       setError(null);
-      const todo = await addTodo(title, dueDate);
+      const todo = await addTodo(title, dueDate, priority);
       newTodoIds.current.add(todo.id);
       setTodos((prev) => [todo, ...prev]);
     } catch {
       setError('Failed to add todo');
+    }
+  }
+
+  async function handlePriorityChange(id: number, priority: 'low' | 'medium' | 'high') {
+    try {
+      setError(null);
+      const updated = await updateTodoPriority(id, priority);
+      setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch {
+      setError('Failed to update priority');
     }
   }
 
@@ -91,6 +101,7 @@ export default function TodoList() {
               todo={todo}
               onToggle={handleToggle}
               onDelete={handleDelete}
+              onPriorityChange={handlePriorityChange}
               isNew={newTodoIds.current.has(todo.id)}
               onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
             />
