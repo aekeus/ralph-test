@@ -7,6 +7,8 @@ import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 import ThemeToggle from './ThemeToggle';
+import Toast from './Toast';
+import type { ToastItem } from './Toast';
 
 export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -18,6 +20,8 @@ export default function TodoList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toasts, setToasts] = useState<(ToastItem & { todo: Todo })[]>([]);
+  const toastIdCounter = useRef(0);
 
   const loadTodos = useCallback(async (params?: FetchTodosParams) => {
     try {
@@ -97,12 +101,43 @@ export default function TodoList() {
     }
   }
 
-  async function handleDelete(id: number) {
+  function handleDelete(id: number) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    setError(null);
+    // Remove from UI immediately
+    setTodos((prev) => prev.filter((t) => t.id !== id));
+    // Show toast with undo option
+    const toastId = ++toastIdCounter.current;
+    setToasts((prev) => [...prev, { id: toastId, todoId: id, message: 'Todo deleted', todo }]);
+  }
+
+  function handleToastUndo(toast: ToastItem & { todo: Todo }) {
+    // Restore the todo to the list
+    setTodos((prev) => {
+      const restored = [...prev, toast.todo];
+      restored.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      return restored;
+    });
+    // Remove the toast
+    setToasts((prev) => prev.filter((t) => t.id !== toast.id));
+  }
+
+  async function handleToastDismiss(toastId: number) {
+    const toast = toasts.find((t) => t.id === toastId);
+    if (!toast) return;
+    // Remove toast from state
+    setToasts((prev) => prev.filter((t) => t.id !== toastId));
+    // Actually delete from the server
     try {
-      setError(null);
-      await deleteTodo(id);
-      setTodos((prev) => prev.filter((t) => t.id !== id));
+      await deleteTodo(toast.todoId);
     } catch {
+      // Restore the todo if the delete fails
+      setTodos((prev) => {
+        const restored = [...prev, toast.todo];
+        restored.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        return restored;
+      });
       setError('Failed to delete todo');
     }
   }
@@ -243,6 +278,18 @@ export default function TodoList() {
             )}
           </Droppable>
         </DragDropContext>
+      )}
+      {toasts.length > 0 && (
+        <div className="toast-container" aria-live="polite">
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              toast={toast}
+              onUndo={() => handleToastUndo(toast)}
+              onDismiss={handleToastDismiss}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

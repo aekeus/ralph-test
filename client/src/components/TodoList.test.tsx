@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import TodoList from './TodoList';
@@ -142,12 +142,12 @@ describe('TodoList', () => {
     });
   });
 
-  it('deletes a todo after confirmation', async () => {
-    vi.useRealTimers();
+  it('shows toast after confirming delete and defers API call', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.deleteTodo).mockResolvedValue();
 
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -161,10 +161,124 @@ describe('TodoList', () => {
     // Confirm the deletion
     await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
 
+    // Todo should be removed from list immediately
     await waitFor(() => {
       expect(screen.queryByText('First todo')).not.toBeInTheDocument();
     });
-    expect(api.deleteTodo).toHaveBeenCalledWith(1);
+
+    // Toast should appear
+    expect(screen.getByText('Todo deleted')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /undo delete/i })).toBeInTheDocument();
+
+    // API should NOT have been called yet
+    expect(api.deleteTodo).not.toHaveBeenCalled();
+
+    // After 5 seconds, toast dismisses and API is called
+    await act(() => vi.advanceTimersByTime(5000));
+
+    // Wait for exit animation (300ms)
+    const toast = screen.getByText('Todo deleted').closest('.toast');
+    expect(toast).toHaveClass('toast--exit');
+  });
+
+  it('restores todo when undo is clicked', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.deleteTodo).mockResolvedValue();
+
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Delete the first todo
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+    await userEvent.click(deleteButtons[0]);
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('First todo')).not.toBeInTheDocument();
+    });
+
+    // Click undo
+    await userEvent.click(screen.getByRole('button', { name: /undo delete/i }));
+
+    // Todo should be restored
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Toast should be gone
+    expect(screen.queryByText('Todo deleted')).not.toBeInTheDocument();
+
+    // API should never have been called
+    expect(api.deleteTodo).not.toHaveBeenCalled();
+  });
+
+  it('calls deleteTodo API after toast auto-dismisses', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.deleteTodo).mockResolvedValue();
+
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Delete the first todo
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+    await userEvent.click(deleteButtons[0]);
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('First todo')).not.toBeInTheDocument();
+    });
+
+    // Advance past 5s timeout
+    await act(() => vi.advanceTimersByTime(5000));
+
+    // Simulate animation end to trigger dismiss
+    const toast = screen.getByText('Todo deleted').closest('.toast');
+    if (toast) {
+      fireEvent.animationEnd(toast);
+    }
+
+    await waitFor(() => {
+      expect(api.deleteTodo).toHaveBeenCalledWith(1);
+    });
+  });
+
+  it('stacks multiple toasts when deleting multiple todos', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.deleteTodo).mockResolvedValue();
+
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Delete first todo
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+    await userEvent.click(deleteButtons[0]);
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('First todo')).not.toBeInTheDocument();
+    });
+
+    // Delete second todo
+    const remainingDeleteBtns = screen.getAllByRole('button', { name: /^delete$/i });
+    await userEvent.click(remainingDeleteBtns[0]);
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Second todo')).not.toBeInTheDocument();
+    });
+
+    // Both toasts should be visible
+    const toastMessages = screen.getAllByText('Todo deleted');
+    expect(toastMessages).toHaveLength(2);
   });
 
   it('applies entrance animation class to newly added todo', async () => {
