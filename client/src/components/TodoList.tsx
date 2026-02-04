@@ -26,6 +26,7 @@ export default function TodoList() {
   const toastIdCounter = useRef(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const addTodoInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,8 +49,9 @@ export default function TodoList() {
     if (statusFilter !== 'all') params.status = statusFilter;
     if (priorityFilter !== 'all') params.priority = priorityFilter;
     if (sortOrder !== 'newest') params.sort = sortOrder;
+    if (selectedTags.length > 0) params.tag = selectedTags;
     return params;
-  }, [searchQuery, statusFilter, priorityFilter, sortOrder]);
+  }, [searchQuery, statusFilter, priorityFilter, sortOrder, selectedTags]);
 
   const loadAllTags = useCallback(async () => {
     try {
@@ -73,7 +75,7 @@ export default function TodoList() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchQuery, statusFilter, priorityFilter, sortOrder, loadTodos, buildParams]);
+  }, [searchQuery, statusFilter, priorityFilter, sortOrder, selectedTags, loadTodos, buildParams]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -244,11 +246,17 @@ export default function TodoList() {
     }
   }
 
+  function toggleTagFilter(tagName: string) {
+    setSelectedTags((prev) =>
+      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
+    );
+  }
+
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchQuery(e.target.value);
   }
 
-  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all' || sortOrder !== 'newest';
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all' || sortOrder !== 'newest' || selectedTags.length > 0;
 
   if (loading && todos.length === 0 && !hasActiveFilters) return <p>Loading todos...</p>;
 
@@ -347,6 +355,42 @@ export default function TodoList() {
           ))}
         </div>
       </div>
+      {allTags.length > 0 && (
+        <div className="tag-filter-bar" role="group" aria-label="Filter by tags">
+          <span className="filter-label">Tags:</span>
+          <div className="tag-filter-chips">
+            {allTags.map((tag) => {
+              const isActive = selectedTags.includes(tag.name);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  className={`tag-filter-chip ${isActive ? 'tag-filter-chip--active' : ''}`}
+                  style={isActive ? { backgroundColor: tag.color + '22', borderColor: tag.color, color: tag.color } : undefined}
+                  onClick={() => toggleTagFilter(tag.name)}
+                  aria-pressed={isActive}
+                >
+                  <span className="tag-filter-dot" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                  {isActive && (
+                    <span
+                      className="tag-filter-clear"
+                      role="button"
+                      aria-label={`Clear ${tag.name} filter`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTagFilter(tag.name);
+                      }}
+                    >
+                      &times;
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <AddTodo ref={addTodoInputRef} onAdd={handleAdd} />
       {todos.length === 0 ? (
         <p>{hasActiveFilters ? 'No todos match your filters.' : 'No todos yet. Add one above!'}</p>

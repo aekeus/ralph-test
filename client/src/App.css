@@ -220,6 +220,80 @@
     color: #4ade80;
   }
 
+/* ===== Tag Filter Bar ===== */
+.tag-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.tag-filter-chips {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.tag-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast);
+}
+
+.tag-filter-chip:hover {
+  background-color: var(--color-gray-100);
+  color: var(--color-text);
+}
+
+.tag-filter-chip--active {
+  font-weight: var(--font-weight-semibold);
+}
+
+.tag-filter-chip--active:hover {
+  opacity: 0.85;
+}
+
+.tag-filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tag-filter-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.tag-filter-clear:hover {
+  opacity: 1;
+}
+
+[data-theme="dark"] .tag-filter-chip:hover {
+  background-color: var(--color-gray-700);
+}
+
 .add-todo {
   display: flex;
   gap: var(--space-sm);

@@ -842,6 +842,140 @@ describe('TodoList', () => {
     });
   });
 
+  // ===== Tag Filter Tests =====
+
+  it('renders tag filter bar when tags exist', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([
+      { id: 1, name: 'work', color: '#ef4444' },
+      { id: 2, name: 'personal', color: '#3b82f6' },
+    ]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Tags:')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /work/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /personal/i })).toBeInTheDocument();
+  });
+
+  it('does not render tag filter bar when no tags exist', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Tags:')).not.toBeInTheDocument();
+  });
+
+  it('calls fetchTodos with tag param when clicking a tag chip', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([
+      { id: 1, name: 'work', color: '#ef4444' },
+    ]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    const workChip = screen.getByRole('button', { name: /work/i });
+    await userEvent.click(workChip);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ tag: ['work'] });
+    });
+  });
+
+  it('supports multiple tag selection with AND logic', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([
+      { id: 1, name: 'work', color: '#ef4444' },
+      { id: 2, name: 'personal', color: '#3b82f6' },
+    ]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    await userEvent.click(screen.getByRole('button', { name: /work/i }));
+    await act(() => vi.advanceTimersByTime(300));
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    await userEvent.click(screen.getByRole('button', { name: /personal/i }));
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ tag: ['work', 'personal'] });
+    });
+  });
+
+  it('shows clear button on active tag chips and removes tag on click', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([
+      { id: 1, name: 'work', color: '#ef4444' },
+    ]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    // Click to activate the tag
+    await userEvent.click(screen.getByRole('button', { name: /work/i }));
+    await act(() => vi.advanceTimersByTime(300));
+
+    // Clear button should appear
+    const clearBtn = screen.getByRole('button', { name: /clear work filter/i });
+    expect(clearBtn).toBeInTheDocument();
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+
+    // Click the clear button
+    await userEvent.click(clearBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({});
+    });
+  });
+
+  it('sets aria-pressed on active tag filter chips', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.fetchTags).mockResolvedValue([
+      { id: 1, name: 'work', color: '#ef4444' },
+    ]);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const workChip = screen.getByRole('button', { name: /work/i });
+    expect(workChip).toHaveAttribute('aria-pressed', 'false');
+
+    await userEvent.click(workChip);
+
+    expect(workChip).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('opens shortcuts modal when keyboard button is clicked', async () => {
     HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
       this.setAttribute('open', '');

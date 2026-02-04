@@ -144,6 +144,39 @@ describe('GET /api/todos - search and filters', () => {
     );
   });
 
+  it('filters by a single tag', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?tag=urgent');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE id IN (SELECT tt.todo_id FROM todo_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tg.name = ANY($1) GROUP BY tt.todo_id HAVING COUNT(DISTINCT tg.name) = $2)'),
+      [['urgent'], 1]
+    );
+  });
+
+  it('filters by multiple tags with AND logic', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?tag=urgent&tag=work');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE id IN (SELECT tt.todo_id FROM todo_tags tt JOIN tags tg ON tg.id = tt.tag_id WHERE tg.name = ANY($1) GROUP BY tt.todo_id HAVING COUNT(DISTINCT tg.name) = $2)'),
+      [['urgent', 'work'], 2]
+    );
+  });
+
+  it('combines tag filter with other filters', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?status=active&tag=urgent');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('completed = $1'),
+      expect.arrayContaining([false, ['urgent'], 1])
+    );
+  });
+
   it('combines filters with sort', async () => {
     mockQuery.mockResolvedValue({ rows: [] });
 
