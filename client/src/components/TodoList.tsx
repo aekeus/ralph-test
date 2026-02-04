@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Todo } from '../types';
 import { fetchTodos, addTodo, toggleTodo, deleteTodo, updateTodoPriority, exportJsonUrl, exportCsvUrl } from '../api';
+import type { FetchTodosParams } from '../api';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 
@@ -10,29 +11,53 @@ export default function TodoList() {
   const [error, setError] = useState<string | null>(null);
   const newTodoIds = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    loadTodos();
-  }, []);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function loadTodos() {
+  const loadTodos = useCallback(async (params?: FetchTodosParams) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTodos();
+      const data = await fetchTodos(params);
       setTodos(data);
     } catch {
       setError('Failed to load todos');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  const buildParams = useCallback((): FetchTodosParams => {
+    const params: FetchTodosParams = {};
+    if (searchQuery.trim()) params.search = searchQuery.trim();
+    if (statusFilter !== 'all') params.status = statusFilter;
+    if (priorityFilter !== 'all') params.priority = priorityFilter;
+    return params;
+  }, [searchQuery, statusFilter, priorityFilter]);
+
+  useEffect(() => {
+    loadTodos();
+  }, [loadTodos]);
+
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      loadTodos(buildParams());
+    }, 300);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchQuery, statusFilter, priorityFilter, loadTodos, buildParams]);
 
   async function handleAdd(title: string, dueDate?: string, priority?: 'low' | 'medium' | 'high') {
     try {
       setError(null);
       const todo = await addTodo(title, dueDate, priority);
       newTodoIds.current.add(todo.id);
-      setTodos((prev) => [todo, ...prev]);
+      // Reload with current filters to keep list consistent
+      await loadTodos(buildParams());
     } catch {
       setError('Failed to add todo');
     }
@@ -51,8 +76,9 @@ export default function TodoList() {
   async function handleToggle(todo: Todo) {
     try {
       setError(null);
-      const updated = await toggleTodo(todo);
-      setTodos((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      await toggleTodo(todo);
+      // Reload with current filters since status may have changed
+      await loadTodos(buildParams());
     } catch {
       setError('Failed to update todo');
     }
@@ -68,7 +94,13 @@ export default function TodoList() {
     }
   }
 
-  if (loading) return <p>Loading todos...</p>;
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearchQuery(e.target.value);
+  }
+
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
+
+  if (loading && todos.length === 0 && !hasActiveFilters) return <p>Loading todos...</p>;
 
   return (
     <div className="todo-list">
@@ -90,9 +122,53 @@ export default function TodoList() {
         </div>
       </header>
       {error && <p className="error">{error}</p>}
+      <div className="search-bar">
+        <span className="search-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          placeholder="Search todos..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="search-input"
+          aria-label="Search todos"
+        />
+      </div>
+      <div className="filter-bar">
+        <div className="filter-group">
+          <span className="filter-label">Status:</span>
+          {(['all', 'active', 'completed'] as const).map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`filter-chip ${statusFilter === status ? 'filter-chip--active' : ''}`}
+              onClick={() => setStatusFilter(status)}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="filter-group">
+          <span className="filter-label">Priority:</span>
+          {(['all', 'high', 'medium', 'low'] as const).map((priority) => (
+            <button
+              key={priority}
+              type="button"
+              className={`filter-chip ${priorityFilter === priority ? 'filter-chip--active' : ''} ${priority !== 'all' ? `filter-chip--${priority}` : ''}`}
+              onClick={() => setPriorityFilter(priority)}
+            >
+              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
       <AddTodo onAdd={handleAdd} />
       {todos.length === 0 ? (
-        <p>No todos yet. Add one above!</p>
+        <p>{hasActiveFilters ? 'No todos match your filters.' : 'No todos yet. Add one above!'}</p>
       ) : (
         <ul>
           {todos.map((todo) => (

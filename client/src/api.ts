@@ -5,8 +5,14 @@ const api = axios.create({
   baseURL: '/api/todos',
 });
 
-export async function fetchTodos(): Promise<Todo[]> {
-  const { data } = await api.get<Todo[]>('/');
+export interface FetchTodosParams {
+  search?: string;
+  status?: 'active' | 'completed';
+  priority?: 'high' | 'medium' | 'low';
+}
+
+export async function fetchTodos(params?: FetchTodosParams): Promise<Todo[]> {
+  const { data } = await api.get<Todo[]>('/', { params });
   return data;
 }
 

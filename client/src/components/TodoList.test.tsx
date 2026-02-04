@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import TodoList from './TodoList';
@@ -44,7 +44,14 @@ const mockTodos: Todo[] = [
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
 });
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+import { afterEach } from 'vitest';
 
 describe('TodoList', () => {
   it('shows loading state initially', () => {
@@ -56,6 +63,7 @@ describe('TodoList', () => {
   it('renders todos after loading', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -65,6 +73,7 @@ describe('TodoList', () => {
   it('shows empty message when no todos', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue([]);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('No todos yet. Add one above!')).toBeInTheDocument();
     });
@@ -73,12 +82,14 @@ describe('TodoList', () => {
   it('shows error when fetch fails', async () => {
     vi.mocked(api.fetchTodos).mockRejectedValue(new Error('Network error'));
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('Failed to load todos')).toBeInTheDocument();
     });
   });
 
   it('adds a new todo', async () => {
+    vi.useRealTimers();
     const newTodo: Todo = {
       id: 3,
       title: 'New todo',
@@ -96,6 +107,9 @@ describe('TodoList', () => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
 
+    // After add, fetchTodos is called again - return list with new todo
+    vi.mocked(api.fetchTodos).mockResolvedValue([newTodo, ...mockTodos]);
+
     await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'New todo');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
 
@@ -106,6 +120,7 @@ describe('TodoList', () => {
   });
 
   it('toggles a todo', async () => {
+    vi.useRealTimers();
     const toggled = { ...mockTodos[0], completed: true };
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.toggleTodo).mockResolvedValue(toggled);
@@ -124,6 +139,7 @@ describe('TodoList', () => {
   });
 
   it('deletes a todo after confirmation', async () => {
+    vi.useRealTimers();
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.deleteTodo).mockResolvedValue();
 
@@ -148,6 +164,7 @@ describe('TodoList', () => {
   });
 
   it('applies entrance animation class to newly added todo', async () => {
+    vi.useRealTimers();
     const newTodo: Todo = {
       id: 3,
       title: 'Animated todo',
@@ -165,6 +182,9 @@ describe('TodoList', () => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
 
+    // After add, fetchTodos returns list with new todo
+    vi.mocked(api.fetchTodos).mockResolvedValue([newTodo, ...mockTodos]);
+
     await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'Animated todo');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
 
@@ -177,6 +197,7 @@ describe('TodoList', () => {
   });
 
   it('shows error when add fails', async () => {
+    vi.useRealTimers();
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.addTodo).mockRejectedValue(new Error('fail'));
 
@@ -196,6 +217,7 @@ describe('TodoList', () => {
   it('renders Export JSON button with correct link', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -210,6 +232,7 @@ describe('TodoList', () => {
   it('renders Export CSV button with correct link', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -231,6 +254,7 @@ describe('TodoList', () => {
   it('renders header with heading and export buttons in a header element', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -247,6 +271,7 @@ describe('TodoList', () => {
   it('renders export buttons with pill styling class and icons', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
     await waitFor(() => {
       expect(screen.getByText('First todo')).toBeInTheDocument();
     });
@@ -264,5 +289,188 @@ describe('TodoList', () => {
     expect(csvIcon).toBeInTheDocument();
     expect(jsonIcon).toHaveAttribute('aria-hidden', 'true');
     expect(csvIcon).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  // ===== Search and Filter Tests =====
+
+  it('renders search bar with magnifying glass icon', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText('Search todos...');
+    expect(searchInput).toBeInTheDocument();
+    expect(searchInput).toHaveAttribute('aria-label', 'Search todos');
+
+    const searchBar = searchInput.closest('.search-bar');
+    expect(searchBar).toBeInTheDocument();
+    const icon = searchBar!.querySelector('.search-icon');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('renders status filter chips', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Status:')).toBeInTheDocument();
+    const allBtn = screen.getAllByRole('button', { name: 'All' })[0];
+    const activeBtn = screen.getByRole('button', { name: 'Active' });
+    const completedBtn = screen.getByRole('button', { name: 'Completed' });
+
+    expect(allBtn).toHaveClass('filter-chip', 'filter-chip--active');
+    expect(activeBtn).toHaveClass('filter-chip');
+    expect(activeBtn).not.toHaveClass('filter-chip--active');
+    expect(completedBtn).toHaveClass('filter-chip');
+    expect(completedBtn).not.toHaveClass('filter-chip--active');
+  });
+
+  it('renders priority filter chips', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Priority:')).toBeInTheDocument();
+    const filterBar = screen.getByText('Priority:').closest('.filter-group')!;
+    const highBtn = filterBar.querySelector('.filter-chip--high');
+    const mediumBtn = filterBar.querySelector('.filter-chip--medium');
+    const lowBtn = filterBar.querySelector('.filter-chip--low');
+
+    expect(highBtn).toBeInTheDocument();
+    expect(mediumBtn).toBeInTheDocument();
+    expect(lowBtn).toBeInTheDocument();
+    expect(highBtn).toHaveClass('filter-chip');
+    expect(mediumBtn).toHaveClass('filter-chip');
+    expect(lowBtn).toHaveClass('filter-chip');
+  });
+
+  it('calls fetchTodos with search param after debounce when typing in search', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([mockTodos[0]]);
+
+    const searchInput = screen.getByPlaceholderText('Search todos...');
+    await userEvent.type(searchInput, 'First');
+
+    // Should not have called yet (debounce)
+    expect(api.fetchTodos).not.toHaveBeenCalledWith({ search: 'First' });
+
+    // Advance past debounce
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ search: 'First' });
+    });
+  });
+
+  it('calls fetchTodos with status filter when clicking status chip', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([mockTodos[1]]);
+
+    const completedBtn = screen.getByRole('button', { name: 'Completed' });
+    await userEvent.click(completedBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ status: 'completed' });
+    });
+
+    expect(completedBtn).toHaveClass('filter-chip--active');
+  });
+
+  it('calls fetchTodos with priority filter when clicking priority chip', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    const filterBar = screen.getByText('Priority:').closest('.filter-group')!;
+    const highBtn = filterBar.querySelector('.filter-chip--high') as HTMLElement;
+    await userEvent.click(highBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ priority: 'high' });
+    });
+
+    expect(highBtn).toHaveClass('filter-chip--active');
+  });
+
+  it('shows "No todos match your filters" when filters return empty', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+    const filterBar = screen.getByText('Priority:').closest('.filter-group')!;
+    const highBtn = filterBar.querySelector('.filter-chip--high') as HTMLElement;
+    await userEvent.click(highBtn);
+
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(screen.getByText('No todos match your filters.')).toBeInTheDocument();
+    });
+  });
+
+  it('combines status and priority filters', async () => {
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    render(<TodoList />);
+    await act(() => vi.advanceTimersByTime(300));
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    const activeBtn = screen.getByRole('button', { name: 'Active' });
+    await userEvent.click(activeBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    vi.mocked(api.fetchTodos).mockClear();
+    vi.mocked(api.fetchTodos).mockResolvedValue([]);
+
+    const filterBar = screen.getByText('Priority:').closest('.filter-group')!;
+    const highBtn = filterBar.querySelector('.filter-chip--high') as HTMLElement;
+    await userEvent.click(highBtn);
+    await act(() => vi.advanceTimersByTime(300));
+
+    await waitFor(() => {
+      expect(api.fetchTodos).toHaveBeenCalledWith({ status: 'active', priority: 'high' });
+    });
   });
 });
