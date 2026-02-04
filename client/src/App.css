@@ -2,6 +2,26 @@
   max-width: 600px;
   margin: 0 auto;
   padding: var(--space-xl);
+  width: 100%;
+}
+
+/* ===== Responsive Breakpoints ===== */
+@media (max-width: 480px) {
+  #root {
+    padding: var(--space-md);
+  }
+}
+
+@media (min-width: 768px) {
+  #root {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 1200px) {
+  #root {
+    max-width: 680px;
+  }
 }
 
 .todo-header {
@@ -18,6 +38,35 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.025em;
   color: var(--color-text);
+}
+
+@media (max-width: 480px) {
+  .todo-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .export-buttons {
+    width: 100%;
+  }
+
+  .btn-export {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .todo-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .todo-item-actions {
+    align-self: flex-end;
+  }
 }
 
 .add-todo {
@@ -109,6 +158,22 @@
 
 .todo-item--completed:hover {
   opacity: 0.85;
+}
+
+/* ===== Todo Entrance Animation ===== */
+@keyframes todo-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.todo-item--enter {
+  animation: todo-enter 300ms ease-out;
 }
 
 /* ===== Custom Circular Checkbox ===== */

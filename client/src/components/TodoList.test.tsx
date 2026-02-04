@@ -140,6 +140,33 @@ describe('TodoList', () => {
     expect(api.deleteTodo).toHaveBeenCalledWith(1);
   });
 
+  it('applies entrance animation class to newly added todo', async () => {
+    const newTodo: Todo = {
+      id: 3,
+      title: 'Animated todo',
+      completed: false,
+      created_at: '2024-01-03T00:00:00Z',
+      updated_at: '2024-01-03T00:00:00Z',
+    };
+    vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
+    vi.mocked(api.addTodo).mockResolvedValue(newTodo);
+
+    render(<TodoList />);
+    await waitFor(() => {
+      expect(screen.getByText('First todo')).toBeInTheDocument();
+    });
+
+    await userEvent.type(screen.getByPlaceholderText('Add a new todo...'), 'Animated todo');
+    await userEvent.click(screen.getByRole('button', { name: /add/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Animated todo')).toBeInTheDocument();
+    });
+
+    const newItem = screen.getByText('Animated todo').closest('.todo-item');
+    expect(newItem).toHaveClass('todo-item--enter');
+  });
+
   it('shows error when add fails', async () => {
     vi.mocked(api.fetchTodos).mockResolvedValue(mockTodos);
     vi.mocked(api.addTodo).mockRejectedValue(new Error('fail'));

@@ -282,6 +282,68 @@ describe('Subtask section CSS styles', () => {
   });
 });
 
+describe('Entrance animation', () => {
+  it('applies todo-item--enter class when isNew is true', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={true} />);
+    const li = screen.getByRole('listitem');
+    expect(li).toHaveClass('todo-item--enter');
+  });
+
+  it('does not apply todo-item--enter class when isNew is false', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={false} />);
+    const li = screen.getByRole('listitem');
+    expect(li).not.toHaveClass('todo-item--enter');
+  });
+
+  it('does not apply todo-item--enter class when isNew is undefined', () => {
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const li = screen.getByRole('listitem');
+    expect(li).not.toHaveClass('todo-item--enter');
+  });
+
+  it('calls onAnimationEnd when animation completes', () => {
+    const onAnimationEnd = vi.fn();
+    render(<TodoItem todo={baseTodo} onToggle={vi.fn()} onDelete={vi.fn()} isNew={true} onAnimationEnd={onAnimationEnd} />);
+    const li = screen.getByRole('listitem');
+    li.dispatchEvent(new Event('animationend', { bubbles: true }));
+    expect(onAnimationEnd).toHaveBeenCalled();
+  });
+});
+
+describe('Entrance animation CSS styles', () => {
+  it('defines todo-enter keyframes with opacity and translateY', () => {
+    expect(appCss).toContain('@keyframes todo-enter');
+    expect(appCss).toMatch(/todo-enter[^}]*\{[^}]*opacity:\s*0/);
+    expect(appCss).toMatch(/todo-enter[^}]*\{[^}]*transform:\s*translateY\(8px\)/);
+  });
+
+  it('applies todo-enter animation to todo-item--enter class', () => {
+    expect(appCss).toMatch(/\.todo-item--enter\s*\{[^}]*animation:\s*todo-enter/);
+  });
+});
+
+describe('Responsive design CSS styles', () => {
+  it('sets width 100% on #root', () => {
+    expect(appCss).toMatch(/#root\s*\{[^}]*width:\s*100%/);
+  });
+
+  it('has a mobile breakpoint that reduces padding', () => {
+    expect(appCss).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[^}]*#root\s*\{[^}]*padding:\s*var\(--space-md\)/);
+  });
+
+  it('has a mobile breakpoint that stacks the header vertically', () => {
+    expect(appCss).toMatch(/@media\s*\(max-width:\s*480px\)[\s\S]*\.todo-header\s*\{[^}]*flex-direction:\s*column/);
+  });
+
+  it('has a tablet breakpoint at 768px', () => {
+    expect(appCss).toMatch(/@media\s*\(min-width:\s*768px\)/);
+  });
+
+  it('has a desktop breakpoint at 1200px', () => {
+    expect(appCss).toMatch(/@media\s*\(min-width:\s*1200px\)/);
+  });
+});
+
 describe('Delete button CSS styles', () => {
   it('styles delete button as circular with transparent background', () => {
     expect(appCss).toMatch(/\.delete-btn\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);

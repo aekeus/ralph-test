@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Todo } from '../types';
 import { fetchTodos, addTodo, toggleTodo, deleteTodo, exportJsonUrl, exportCsvUrl } from '../api';
 import TodoItem from './TodoItem';
@@ -8,6 +8,7 @@ export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const newTodoIds = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     loadTodos();
@@ -30,6 +31,7 @@ export default function TodoList() {
     try {
       setError(null);
       const todo = await addTodo(title);
+      newTodoIds.current.add(todo.id);
       setTodos((prev) => [todo, ...prev]);
     } catch {
       setError('Failed to add todo');
@@ -89,6 +91,8 @@ export default function TodoList() {
               todo={todo}
               onToggle={handleToggle}
               onDelete={handleDelete}
+              isNew={newTodoIds.current.has(todo.id)}
+              onAnimationEnd={() => newTodoIds.current.delete(todo.id)}
             />
           ))}
         </ul>

@@ -6,15 +6,17 @@ interface TodoItemProps {
   todo: Todo;
   onToggle: (todo: Todo) => void;
   onDelete: (id: number) => void;
+  isNew?: boolean;
+  onAnimationEnd?: () => void;
 }
 
-export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onDelete, isNew, onAnimationEnd }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
     <>
-      <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}`}>
+      <li className={`todo-item${todo.completed ? ' todo-item--completed' : ''}${isNew ? ' todo-item--enter' : ''}`} onAnimationEnd={onAnimationEnd}>
         <div className="todo-item-header">
           <label className="todo-item-label">
             <input
