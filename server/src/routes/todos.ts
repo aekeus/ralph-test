@@ -24,6 +24,10 @@ router.get('/', async (req: Request, res: Response) => {
       conditions.push(`completed = $${paramIndex}`);
       params.push(true);
       paramIndex++;
+    } else if (req.query.status === 'overdue') {
+      conditions.push(`due_date < CURRENT_DATE AND completed = $${paramIndex}`);
+      params.push(false);
+      paramIndex++;
     }
 
     if (typeof req.query.priority === 'string' && ['high', 'medium', 'low'].includes(req.query.priority)) {

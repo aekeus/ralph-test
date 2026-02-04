@@ -89,6 +89,17 @@ describe('GET /api/todos - search and filters', () => {
     );
   });
 
+  it('filters by status=overdue (due_date < CURRENT_DATE AND not completed)', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?status=overdue');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE due_date < CURRENT_DATE AND completed = $1 ORDER BY position ASC NULLS LAST, created_at DESC',
+      [false]
+    );
+  });
+
   it('filters by priority', async () => {
     mockQuery.mockResolvedValue({ rows: [] });
 

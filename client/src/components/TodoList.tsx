@@ -18,7 +18,7 @@ export default function TodoList() {
   const newTodoIds = useRef<Set<number>>(new Set());
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'overdue'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'due_date' | 'priority'>('newest');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -262,7 +262,7 @@ export default function TodoList() {
       <div className="filter-bar">
         <div className="filter-group">
           <span className="filter-label">Status:</span>
-          {(['all', 'active', 'completed'] as const).map((status) => (
+          {(['all', 'active', 'completed', 'overdue'] as const).map((status) => (
             <button
               key={status}
               type="button"

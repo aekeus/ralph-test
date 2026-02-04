@@ -7,7 +7,7 @@ const api = axios.create({
 
 export interface FetchTodosParams {
   search?: string;
-  status?: 'active' | 'completed';
+  status?: 'active' | 'completed' | 'overdue';
   priority?: 'high' | 'medium' | 'low';
   sort?: 'newest' | 'due_date' | 'priority';
 }

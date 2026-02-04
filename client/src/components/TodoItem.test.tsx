@@ -228,11 +228,23 @@ describe('TodoItem due date badge', () => {
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('due-date-badge--today');
-    expect(badge).toHaveTextContent(/^Due:/);
+    expect(badge).toHaveTextContent('Due Today');
   });
 
-  it('renders future badge for todo due tomorrow', () => {
+  it('renders soon badge in blue for todo due tomorrow', () => {
     const todo = { ...baseTodo, due_date: getTomorrow() };
+    render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
+    const badge = screen.getByTestId('due-date-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('due-date-badge--soon');
+    expect(badge).toHaveTextContent('Due Soon');
+  });
+
+  it('renders future badge for todo due far in the future', () => {
+    const farFuture = new Date();
+    farFuture.setDate(farFuture.getDate() + 10);
+    const farFutureStr = `${farFuture.getFullYear()}-${String(farFuture.getMonth() + 1).padStart(2, '0')}-${String(farFuture.getDate()).padStart(2, '0')}`;
+    const todo = { ...baseTodo, due_date: farFutureStr };
     render(<TodoItem todo={todo} onToggle={vi.fn()} onDelete={vi.fn()} />);
     const badge = screen.getByTestId('due-date-badge');
     expect(badge).toBeInTheDocument();
@@ -263,6 +275,10 @@ describe('Due date badge CSS styles', () => {
 
   it('styles future badge with neutral background', () => {
     expect(appCss).toMatch(/\.due-date-badge--future\s*\{[^}]*background-color:\s*var\(--color-gray-100\)/);
+  });
+
+  it('styles soon badge with blue background', () => {
+    expect(appCss).toMatch(/\.due-date-badge--soon\s*\{[^}]*background-color:\s*#dbeafe/);
   });
 });
 

@@ -18,12 +18,16 @@ function toDateOnly(dateStr: string): string {
   return dateStr.slice(0, 10);
 }
 
-function getDueDateStatus(dueDate: string, completed: boolean): 'overdue' | 'today' | 'future' {
+function getDueDateStatus(dueDate: string, completed: boolean): 'overdue' | 'today' | 'soon' | 'future' {
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const dueDateOnly = toDateOnly(dueDate);
   if (!completed && dueDateOnly < todayStr) return 'overdue';
   if (dueDateOnly === todayStr) return 'today';
+  // Check if due within next 3 days
+  const soonDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3);
+  const soonStr = `${soonDate.getFullYear()}-${String(soonDate.getMonth() + 1).padStart(2, '0')}-${String(soonDate.getDate()).padStart(2, '0')}`;
+  if (dueDateOnly <= soonStr) return 'soon';
   return 'future';
 }
 
@@ -152,7 +156,10 @@ export default function TodoItem({ todo, onToggle, onDelete, onPriorityChange, o
             </button>
             {todo.due_date && dueDateStatus && (
               <span className={`due-date-badge due-date-badge--${dueDateStatus}`} data-testid="due-date-badge">
-                {dueDateStatus === 'overdue' ? 'Overdue' : `Due: ${formatDueDate(todo.due_date)}`}
+                {dueDateStatus === 'overdue' && 'Overdue'}
+                {dueDateStatus === 'today' && 'Due Today'}
+                {dueDateStatus === 'soon' && 'Due Soon'}
+                {dueDateStatus === 'future' && `Due: ${formatDueDate(todo.due_date)}`}
               </span>
             )}
             <button
