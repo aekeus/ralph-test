@@ -6,13 +6,42 @@ const router = Router();
 // GET /api/todos
 router.get('/', async (req: Request, res: Response) => {
   try {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
+    if (typeof req.query.search === 'string' && req.query.search.trim()) {
+      conditions.push(`title ILIKE $${paramIndex}`);
+      params.push(`%${req.query.search.trim()}%`);
+      paramIndex++;
+    }
+
+    if (req.query.status === 'active') {
+      conditions.push(`completed = $${paramIndex}`);
+      params.push(false);
+      paramIndex++;
+    } else if (req.query.status === 'completed') {
+      conditions.push(`completed = $${paramIndex}`);
+      params.push(true);
+      paramIndex++;
+    }
+
+    if (typeof req.query.priority === 'string' && ['high', 'medium', 'low'].includes(req.query.priority)) {
+      conditions.push(`priority = $${paramIndex}`);
+      params.push(req.query.priority);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
     let orderClause = 'ORDER BY created_at DESC';
     if (req.query.sort === 'due_date') {
       orderClause = 'ORDER BY due_date ASC NULLS LAST';
     } else if (req.query.sort === 'priority') {
       orderClause = "ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END";
     }
-    const result = await pool.query(`SELECT * FROM todos ${orderClause}`);
+
+    const result = await pool.query(`SELECT * FROM todos ${whereClause} ${orderClause}`, params);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch todos' });

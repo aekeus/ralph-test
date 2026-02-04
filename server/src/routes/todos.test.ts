@@ -25,7 +25,7 @@ describe('GET /api/todos', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(todos);
-    expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM todos ORDER BY created_at DESC');
+    expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM todos  ORDER BY created_at DESC', []);
   });
 
   it('returns 500 on database error', async () => {
@@ -35,6 +35,96 @@ describe('GET /api/todos', () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Failed to fetch todos' });
+  });
+});
+
+describe('GET /api/todos - search and filters', () => {
+  it('filters by search text (case-insensitive)', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?search=grocery');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE title ILIKE $1 ORDER BY created_at DESC',
+      ['%grocery%']
+    );
+  });
+
+  it('filters by status=active', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?status=active');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE completed = $1 ORDER BY created_at DESC',
+      [false]
+    );
+  });
+
+  it('filters by status=completed', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?status=completed');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE completed = $1 ORDER BY created_at DESC',
+      [true]
+    );
+  });
+
+  it('filters by priority', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?priority=high');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE priority = $1 ORDER BY created_at DESC',
+      ['high']
+    );
+  });
+
+  it('ignores invalid priority values', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?priority=urgent');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos  ORDER BY created_at DESC',
+      []
+    );
+  });
+
+  it('combines search and status filters', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?search=buy&status=active');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 ORDER BY created_at DESC',
+      ['%buy%', false]
+    );
+  });
+
+  it('combines search, status, and priority filters', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?search=task&status=active&priority=high');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      'SELECT * FROM todos WHERE title ILIKE $1 AND completed = $2 AND priority = $3 ORDER BY created_at DESC',
+      ['%task%', false, 'high']
+    );
+  });
+
+  it('combines filters with sort', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await request(app).get('/api/todos?status=completed&sort=priority');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      "SELECT * FROM todos WHERE completed = $1 ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END",
+      [true]
+    );
   });
 });
 
