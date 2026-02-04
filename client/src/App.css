@@ -49,6 +49,54 @@ ul {
   padding: 0;
 }
 
+.todo-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.todo-item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.subtask-list {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+}
+
+.subtask-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.add-subtask {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.add-subtask input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.add-subtask button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
 .error {
   color: #d32f2f;
 }
